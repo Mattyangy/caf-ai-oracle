@@ -52,21 +52,13 @@ export async function searchArchive(question: string, limit = 6): Promise<Search
   const supabase = adminClient();
   const tsQuery = buildQuery(question);
 
-  const { data, error } = await supabase.rpc("search_chunks", {
-    q: tsQuery,
-    max_results: limit,
-  } as never);
-
-  if (!error && data) return data as SearchHit[];
-
-  // Fallback: manual query if RPC isn't installed yet.
-  const { data: rows } = await supabase
+  const { data: rows, error } = await supabase
     .from("document_chunks")
     .select("id, document_id, page_number, content, documents(title, filename, doc_type)")
     .textSearch("content_tsv", tsQuery, { config: "italian", type: "websearch" })
     .limit(limit);
 
-  if (!rows) return [];
+  if (error || !rows) return [];
 
   return rows.map((r) => {
     const doc = r.documents as { title: string; filename: string; doc_type: string } | null;
