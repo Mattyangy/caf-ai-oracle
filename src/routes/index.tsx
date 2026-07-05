@@ -1,24 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
+import logoAsset from "@/assets/caf-ai-logo.jpg.asset.json";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "CAF AI" },
+      { name: "description", content: "CAF AI — assistente operativo per CAF e Patronato." },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
+    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-6 text-center">
       <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
+        src={logoAsset.url}
+        alt="CAF AI"
+        className="w-64 max-w-full h-auto drop-shadow-2xl"
       />
+      <h1 className="text-4xl font-semibold tracking-tight text-foreground">
+        CAF AI
+      </h1>
+      <p className="max-w-md text-muted-foreground">
+        Assistente operativo per CAF e Patronato.
+      </p>
     </div>
   );
 }
