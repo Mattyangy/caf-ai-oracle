@@ -10,7 +10,7 @@
  * coupling with a specific vendor. Swap providers in src/lib/ai/index.server.ts.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import { streamText, type ModelMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import {
@@ -21,7 +21,8 @@ import {
 } from "@/lib/rag.server";
 import { getAiProvider } from "@/lib/ai/index.server";
 
-type ChatBody = { threadId?: string; messages?: UIMessage[] };
+type ChatMessage = { role: "user" | "assistant"; content: string };
+type ChatBody = { threadId?: string; messages?: ChatMessage[] };
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -71,7 +72,7 @@ export const Route = createFileRoute("/api/chat")({
 
         // Last user message drives the retrieval
         const lastUser = [...messages].reverse().find((m) => m.role === "user");
-        const question = extractText(lastUser);
+        const question = (lastUser?.content ?? "").trim();
 
         // 1) Retrieve from archive
         const hits = question ? await searchArchive(question, 6) : [];
@@ -83,10 +84,15 @@ export const Route = createFileRoute("/api/chat")({
         const provider = getAiProvider();
         const model = provider.chatModel();
 
+        const modelMessages: ModelMessage[] = messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
+
         const result = streamText({
           model,
           system: systemPrompt,
-          messages: await convertToModelMessages(messages),
+          messages: modelMessages,
           onFinish: async ({ text }) => {
             // Persist assistant message + sources with service role (bypass RLS
             // safely since we've already authorized the caller).
