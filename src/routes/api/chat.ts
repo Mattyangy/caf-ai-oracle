@@ -86,7 +86,7 @@ export const Route = createFileRoute("/api/chat")({
         const result = streamText({
           model,
           system: systemPrompt,
-          messages: convertToModelMessages(messages),
+          messages: await convertToModelMessages(messages),
           onFinish: async ({ text }) => {
             // Persist assistant message + sources with service role (bypass RLS
             // safely since we've already authorized the caller).

@@ -64,7 +64,7 @@ export const ingestDocument = createServerFn({ method: "POST" })
         categoria: data.categoria,
         storage_path: data.storage_path,
         page_count: data.page_count,
-        status: "ready",
+        status: "indexed",
         uploaded_by: userId,
         indexed_at: new Date().toISOString(),
       })
