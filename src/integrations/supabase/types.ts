@@ -149,6 +149,7 @@ export type Database = {
       }
       documents: {
         Row: {
+          categoria: string
           created_at: string
           doc_type: Database["public"]["Enums"]["doc_type"]
           error_message: string | null
@@ -163,6 +164,7 @@ export type Database = {
           uploaded_by: string | null
         }
         Insert: {
+          categoria?: string
           created_at?: string
           doc_type: Database["public"]["Enums"]["doc_type"]
           error_message?: string | null
@@ -177,6 +179,7 @@ export type Database = {
           uploaded_by?: string | null
         }
         Update: {
+          categoria?: string
           created_at?: string
           doc_type?: Database["public"]["Enums"]["doc_type"]
           error_message?: string | null
