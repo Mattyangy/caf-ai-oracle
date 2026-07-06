@@ -114,9 +114,10 @@ export const Route = createFileRoute("/api/chat")({
           },
         });
 
-        // Emit sources + reliability once at the start of the stream via
-        // response headers so the client can render them progressively.
-        return result.toUIMessageStreamResponse({
+        // Return a plain text stream. Sources + reliability are emitted as
+        // response headers so the client can render them immediately without
+        // having to parse the AI SDK UI message envelope.
+        return result.toTextStreamResponse({
           headers: {
             "X-Caf-Sources": encodeURIComponent(JSON.stringify(sources)),
             "X-Caf-Reliability": encodeURIComponent(
