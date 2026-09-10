@@ -20,5 +20,8 @@ export type AiProvider = {
    * Vendor-specific options forwarded to streamText({ providerOptions }).
    * Optional: providers that need none simply omit it.
    */
-  readonly chatProviderOptions?: Record<string, Record<string, unknown>>;
+  readonly chatProviderOptions?: Record<
+    string,
+    Record<string, string | number | boolean | string[]>
+  >;
 };
