@@ -220,7 +220,7 @@ type Doc = {
 function DocsTab() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState<ArchiveCategory>("faq");
+  const [category, setCategory] = useState<ArchiveCategory>("circolari");
   const deleteFn = useServerFn(deleteDocument);
 
   async function refresh() {

@@ -20,6 +20,7 @@ type Source = {
   title: string;
   filename: string;
   doc_type: string;
+  categoria?: string;
   page_number: number | null;
 };
 
@@ -327,7 +328,14 @@ function MessageBubble({
                   <div className="min-w-0 flex items-center gap-2">
                     <FileText className="h-4 w-4 text-primary shrink-0" />
                     <div className="min-w-0">
-                      <div className="truncate font-medium">{s.title}</div>
+                      <div className="truncate font-medium flex items-center gap-2">
+                        {s.categoria === "circolari" && (
+                          <span className="shrink-0 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-success/15 text-success border border-success/30">
+                            Circolare
+                          </span>
+                        )}
+                        <span className="truncate">{s.title}</span>
+                      </div>
                       <div className="text-xs text-muted-foreground truncate">
                         {s.filename}
                         {s.page_number ? ` — pagina ${s.page_number}` : ""}

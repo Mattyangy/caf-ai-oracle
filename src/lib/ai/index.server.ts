@@ -6,8 +6,8 @@
  * needs to be modified.
  */
 import type { AiProvider } from "./provider";
-import { createLovableProvider } from "./lovable.server";
+import { createOpenAiProvider } from "./openai.server";
 
 export function getAiProvider(): AiProvider {
-  return createLovableProvider();
+  return createOpenAiProvider();
 }

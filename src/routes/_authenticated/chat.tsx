@@ -74,7 +74,11 @@ function ChatLayout() {
     }
     queryClient.invalidateQueries({ queryKey: ["threads"] });
     setSidebarOpen(false);
-    navigate({ to: "/chat/$threadId", params: { threadId: data.id } });
+    navigate({
+      to: "/chat/$threadId",
+      params: { threadId: data.id },
+      search: { auto: undefined },
+    });
   }
 
   async function renameThread(id: string, currentTitle: string) {
@@ -158,7 +162,11 @@ function ChatLayout() {
               active={pathname.includes(t.id)}
               onOpen={() => {
                 setSidebarOpen(false);
-                navigate({ to: "/chat/$threadId", params: { threadId: t.id } });
+                navigate({
+                  to: "/chat/$threadId",
+                  params: { threadId: t.id },
+                  search: { auto: undefined },
+                });
               }}
               onRename={() => renameThread(t.id, t.title)}
               onDelete={() => deleteThread(t.id)}
