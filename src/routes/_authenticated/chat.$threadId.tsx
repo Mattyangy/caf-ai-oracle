@@ -20,6 +20,7 @@ type Source = {
   title: string;
   filename: string;
   doc_type: string;
+  categoria?: string;
   page_number: number | null;
 };
 

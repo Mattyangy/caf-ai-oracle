@@ -93,6 +93,9 @@ export const Route = createFileRoute("/api/chat")({
           model,
           system: systemPrompt,
           messages: modelMessages,
+          ...(provider.chatProviderOptions
+            ? { providerOptions: provider.chatProviderOptions }
+            : {}),
           onFinish: async ({ text }) => {
             // Persist assistant message + sources with service role (bypass RLS
             // safely since we've already authorized the caller).
