@@ -15,6 +15,13 @@
       "when": 1789211983127,
       "tag": "0001_grant_execute_has_role",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789212026380,
+      "tag": "0002_grant_execute_is_approved_operator",
+      "breakpoints": true
     }
   ]
 }

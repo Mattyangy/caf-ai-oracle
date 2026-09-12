@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.is_approved_operator(uuid) TO authenticated, anon, service_role;
