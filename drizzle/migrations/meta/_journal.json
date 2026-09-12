@@ -8,6 +8,13 @@
       "when": 1789211914527,
       "tag": "0000_grant_data_api_access",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789211983127,
+      "tag": "0001_grant_execute_has_role",
+      "breakpoints": true
     }
   ]
 }
