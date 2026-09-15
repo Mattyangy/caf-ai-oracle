@@ -25,6 +25,9 @@ const ChunkSchema = z.object({
   page_number: z.number().int().positive().nullable(),
   chunk_index: z.number().int().nonnegative(),
   content: z.string().min(1),
+  /** 1-based line range inside the page (PDF) or the file (Markdown). */
+  line_start: z.number().int().positive().nullable().optional(),
+  line_end: z.number().int().positive().nullable().optional(),
 });
 
 const IngestSchema = z.object({
@@ -79,6 +82,8 @@ export const ingestDocument = createServerFn({ method: "POST" })
       page_number: c.page_number,
       chunk_index: c.chunk_index,
       content: c.content,
+      line_start: c.line_start ?? null,
+      line_end: c.line_end ?? null,
     }));
 
     // Insert in batches of 200 to stay well within request size limits.
