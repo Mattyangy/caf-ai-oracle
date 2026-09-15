@@ -1,0 +1,3 @@
+ALTER TABLE public.document_chunks
+  ADD COLUMN IF NOT EXISTS line_start INTEGER,
+  ADD COLUMN IF NOT EXISTS line_end INTEGER;

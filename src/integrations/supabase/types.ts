@@ -117,6 +117,8 @@ export type Database = {
           created_at: string
           document_id: string
           id: string
+          line_end: number | null
+          line_start: number | null
           page_number: number | null
         }
         Insert: {
@@ -126,6 +128,8 @@ export type Database = {
           created_at?: string
           document_id: string
           id?: string
+          line_end?: number | null
+          line_start?: number | null
           page_number?: number | null
         }
         Update: {
@@ -135,6 +139,8 @@ export type Database = {
           created_at?: string
           document_id?: string
           id?: string
+          line_end?: number | null
+          line_start?: number | null
           page_number?: number | null
         }
         Relationships: [
