@@ -5,6 +5,24 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   ssr: false,
+  head: () => ({
+    meta: [
+      { title: "CAF AI — Assistente per CAF e Patronato" },
+      {
+        name: "description",
+        content:
+          "CAF AI è l'assistente intelligente per operatori di CAF e Patronato: risposte fiscali e previdenziali basate sulle circolari del tuo archivio.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:title", content: "CAF AI — Assistente per CAF e Patronato" },
+      {
+        property: "og:description",
+        content:
+          "Assistente AI per operatori CAF e Patronato, con ricerca prioritaria nelle circolari caricate e riferimenti a pagina e documento.",
+      },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: HomeRedirect,
 });
 
