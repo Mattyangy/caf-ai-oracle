@@ -19,6 +19,9 @@ export type SearchHit = {
   categoria: string;
   filename: string;
   page_number: number | null;
+  /** 1-based line range of the extract inside the page. */
+  line_start: number | null;
+  line_end: number | null;
   content: string;
   rank: number;
 };
@@ -52,6 +55,8 @@ type ChunkRow = {
   id: string;
   document_id: string;
   page_number: number | null;
+  line_start: number | null;
+  line_end: number | null;
   content: string;
   documents: {
     title: string;
@@ -70,6 +75,8 @@ function toHits(rows: ChunkRow[]): SearchHit[] {
     categoria: r.documents?.categoria ?? "documento",
     filename: r.documents?.filename ?? "",
     page_number: r.page_number,
+    line_start: r.line_start,
+    line_end: r.line_end,
     content: r.content,
     rank: 0,
   }));
