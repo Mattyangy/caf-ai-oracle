@@ -239,6 +239,8 @@ export function buildSourcesPayload(hits: SearchHit[]) {
     doc_type: string;
     categoria: string;
     page_number: number | null;
+    line_start: number | null;
+    line_end: number | null;
   }> = [];
   for (const h of hits) {
     const key = `${h.document_id}:${h.page_number ?? "-"}`;
@@ -251,6 +253,8 @@ export function buildSourcesPayload(hits: SearchHit[]) {
       doc_type: h.document_type,
       categoria: h.categoria,
       page_number: h.page_number,
+      line_start: h.line_start,
+      line_end: h.line_end,
     });
   }
   return sources;
