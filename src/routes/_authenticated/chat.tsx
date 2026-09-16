@@ -12,6 +12,7 @@ import {
   Pencil,
   Trash2,
   Search,
+  FileSearch,
   ShieldCheck,
   Menu,
   X,
@@ -175,6 +176,20 @@ function ChatLayout() {
         </div>
 
         <div className="border-t border-sidebar-border p-2 space-y-1">
+          <Link
+            to="/circolari"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition text-sm"
+          >
+            <Search className="h-4 w-4" />
+            Ricerca circolari
+          </Link>
+          <Link
+            to="/analizza"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition text-sm"
+          >
+            <FileSearch className="h-4 w-4" />
+            Analizza documento
+          </Link>
           {isAdmin && (
             <Link
               to="/admin"
