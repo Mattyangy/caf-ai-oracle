@@ -13,7 +13,9 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiCircolariSearchRouteImport } from './routes/api/circolari-search'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiAnalizzaRouteImport } from './routes/api/analizza'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -39,9 +41,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCircolariSearchRoute = ApiCircolariSearchRouteImport.update({
+  id: '/api/circolari-search',
+  path: '/api/circolari-search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAnalizzaRoute = ApiAnalizzaRouteImport.update({
+  id: '/api/analizza',
+  path: '/api/analizza',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -78,7 +90,9 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
+  '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/circolari-search': typeof ApiCircolariSearchRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
 }
@@ -88,7 +102,9 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/circolari-search': typeof ApiCircolariSearchRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat': typeof AuthenticatedChatIndexRoute
 }
@@ -101,7 +117,9 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/circolari-search': typeof ApiCircolariSearchRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
 }
@@ -114,7 +132,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/chat'
     | '/settings'
+    | '/api/analizza'
     | '/api/chat'
+    | '/api/circolari-search'
     | '/chat/$threadId'
     | '/chat/'
   fileRoutesByTo: FileRoutesByTo
@@ -124,7 +144,9 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/admin'
     | '/settings'
+    | '/api/analizza'
     | '/api/chat'
+    | '/api/circolari-search'
     | '/chat/$threadId'
     | '/chat'
   id:
@@ -136,7 +158,9 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/chat'
     | '/_authenticated/settings'
+    | '/api/analizza'
     | '/api/chat'
+    | '/api/circolari-search'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/chat/'
   fileRoutesById: FileRoutesById
@@ -146,7 +170,9 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiAnalizzaRoute: typeof ApiAnalizzaRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiCircolariSearchRoute: typeof ApiCircolariSearchRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -179,11 +205,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/circolari-search': {
+      id: '/api/circolari-search'
+      path: '/api/circolari-search'
+      fullPath: '/api/circolari-search'
+      preLoaderRoute: typeof ApiCircolariSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/analizza': {
+      id: '/api/analizza'
+      path: '/api/analizza'
+      fullPath: '/api/analizza'
+      preLoaderRoute: typeof ApiAnalizzaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/settings': {
@@ -257,7 +297,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiAnalizzaRoute: ApiAnalizzaRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiCircolariSearchRoute: ApiCircolariSearchRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
