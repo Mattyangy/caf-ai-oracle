@@ -95,7 +95,7 @@ async function search(
   let q = supabase
     .from("document_chunks")
     .select(
-      "id, document_id, page_number, content, documents!inner(title, filename, doc_type, categoria)",
+      "id, document_id, page_number, line_start, line_end, content, documents!inner(title, filename, doc_type, categoria)",
     )
     .textSearch("content_tsv", tsQuery, { config: "italian", type: "websearch" });
 
@@ -122,6 +122,48 @@ export async function searchArchive(question: string, limit = 6): Promise<Search
   const rest = others.filter((h) => !seen.has(h.chunk_id));
 
   return [...circolari, ...rest].slice(0, limit);
+}
+
+/**
+ * Search ONLY the "circolari" category — used by the dedicated
+ * "Ricerca circolari" page, which must never mix in other sources.
+ */
+export async function searchCircolari(question: string, limit = 8): Promise<SearchHit[]> {
+  const supabase = adminClient();
+  return search(supabase, buildQuery(question), limit, "circolari");
+}
+
+/** Prompt for the dedicated circular-search answer (short, always cited). */
+export function buildCircolariPrompt(hits: SearchHit[]): string {
+  if (hits.length === 0) {
+    return `Sei CAF AI. L'operatore ha cercato nell'archivio delle CIRCOLARI ma nessuna circolare pertinente è stata trovata.
+Rispondi in italiano con una sola frase: spiega che non risultano circolari caricate pertinenti e suggerisci come riformulare la ricerca. Non inventare riferimenti.`;
+  }
+
+  const context = hits
+    .map((h, i) => {
+      const page = h.page_number ? `pagina ${h.page_number}` : "pagina n/d";
+      const lines =
+        h.line_start && h.line_end
+          ? h.line_start === h.line_end
+            ? `, riga ${h.line_start}`
+            : `, righe ${h.line_start}-${h.line_end}`
+          : "";
+      return `[Estratto ${i + 1}] ${h.document_title} — ${page}${lines}\n${h.content.slice(0, 1500)}`;
+    })
+    .join("\n\n---\n\n");
+
+  return `Sei CAF AI, assistente per operatori di CAF e Patronato. Rispondi SOLO sulla base delle circolari qui riportate.
+
+===== CIRCOLARI TROVATE =====
+${context}
+=============================
+
+Istruzioni:
+1. Rispondi in italiano, in modo sintetico e operativo (massimo 10 righe).
+2. Cita sempre la circolare, la pagina e le righe da cui proviene ogni informazione (es. "Circolare X, pagina 3, righe 12-18").
+3. Se le circolari non rispondono alla domanda, dillo chiaramente invece di inventare.
+4. Non usare la dicitura [Estratto N]: usa i titoli delle circolari.`;
 }
 
 /**
