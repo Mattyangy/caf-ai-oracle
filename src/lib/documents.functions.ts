@@ -148,3 +148,59 @@ export const getDocumentUrl = createServerFn({ method: "POST" })
     }
     return { url, filename: doc.filename };
   });
+
+const ReindexSchema = z.object({
+  document_id: z.string().uuid(),
+  page_count: z.number().int().nonnegative().nullable(),
+  chunks: z.array(ChunkSchema).min(1).max(2000),
+});
+
+/**
+ * Replace the chunks of an already-uploaded document (admin only).
+ * Used by the "Re-indicizza" button so old circulars gain line numbers
+ * without having to be uploaded again.
+ */
+export const reindexDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => ReindexSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Non autorizzato");
+
+    const { error: delErr } = await supabase
+      .from("document_chunks")
+      .delete()
+      .eq("document_id", data.document_id);
+    if (delErr) throw new Error("Errore pulizia indice: " + delErr.message);
+
+    const rows = data.chunks.map((c) => ({
+      document_id: data.document_id,
+      page_number: c.page_number,
+      chunk_index: c.chunk_index,
+      content: c.content,
+      line_start: c.line_start ?? null,
+      line_end: c.line_end ?? null,
+    }));
+
+    for (let i = 0; i < rows.length; i += 200) {
+      const { error } = await supabase
+        .from("document_chunks")
+        .insert(rows.slice(i, i + 200));
+      if (error) throw new Error("Errore indicizzazione: " + error.message);
+    }
+
+    await supabase
+      .from("documents")
+      .update({
+        page_count: data.page_count,
+        status: "indexed",
+        indexed_at: new Date().toISOString(),
+      })
+      .eq("id", data.document_id);
+
+    return { chunks: rows.length };
+  });
