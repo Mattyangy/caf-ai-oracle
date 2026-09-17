@@ -17,7 +17,6 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/chat")({
@@ -62,24 +61,18 @@ function ChatLayout() {
     navigate({ to: "/auth", replace: true });
   }
 
-  async function handleNewChat() {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("chat_threads")
-      .insert({ user_id: user.id, title: "Nuova conversazione" })
-      .select("id")
-      .single();
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    queryClient.invalidateQueries({ queryKey: ["threads"] });
+  /**
+   * "Nuova chat" always brings the operator back to the welcome screen
+   * ("Ciao …") at /chat, where the first question starts a fresh thread.
+   * No empty thread is created until a question is actually sent.
+   */
+  function handleNewChat() {
     setSidebarOpen(false);
-    navigate({
-      to: "/chat/$threadId",
-      params: { threadId: data.id },
-      search: { auto: undefined },
-    });
+    navigate({ to: "/chat" });
+    // Focus the composer (also when already on /chat, where no remount happens).
+    window.setTimeout(() => {
+      document.querySelector<HTMLTextAreaElement>("main textarea")?.focus();
+    }, 60);
   }
 
   async function renameThread(id: string, currentTitle: string) {
