@@ -431,59 +431,7 @@ function UploadCard({
   );
 }
 
-/* ---------------- Parsing helpers ---------------- */
-
-type ExtractedChunk = { page_number: number | null; chunk_index: number; content: string };
-
-function sanitize(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
-}
-
-// Roughly 1200 chars per chunk keeps FTS relevance high without ballooning the DB.
-function chunkText(text: string, chunkSize = 1200): string[] {
-  const clean = text.replace(/\s+/g, " ").trim();
-  if (!clean) return [];
-  const out: string[] = [];
-  for (let i = 0; i < clean.length; i += chunkSize) {
-    out.push(clean.slice(i, i + chunkSize));
-  }
-  return out;
-}
-
-async function extractMarkdown(
-  file: File,
-): Promise<{ chunks: ExtractedChunk[]; pageCount: number | null }> {
-  const text = await file.text();
-  const parts = chunkText(text);
-  return {
-    chunks: parts.map((content, i) => ({ page_number: null, chunk_index: i, content })),
-    pageCount: null,
-  };
-}
-
-async function extractPdf(
-  file: File,
-  onPage: (p: number) => void,
-): Promise<{ chunks: ExtractedChunk[]; pageCount: number }> {
-  // pdfjs is imported dynamically so the admin bundle stays lean.
-  const pdfjs = await import("pdfjs-dist");
-  const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
-  pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
-
-  const buffer = await file.arrayBuffer();
-  const pdf = await pdfjs.getDocument({ data: buffer }).promise;
-  const chunks: ExtractedChunk[] = [];
-  let chunkIndex = 0;
-  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-    onPage(pageNum);
-    const page = await pdf.getPage(pageNum);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      .map((it) => ("str" in it ? (it as { str: string }).str : ""))
-      .join(" ");
-    for (const part of chunkText(pageText)) {
-      chunks.push({ page_number: pageNum, chunk_index: chunkIndex++, content: part });
-    }
-  }
-  return { chunks, pageCount: pdf.numPages };
-}
+/* ---------------- Parsing helpers ----------------
+ * The extraction logic (page + line numbers) lives in src/lib/pdf-extract.ts
+ * and is shared with the "Analizza documento" page.
+ */
