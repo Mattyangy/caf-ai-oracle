@@ -339,7 +339,7 @@ function UploadCard({
 
       // 2) Upload raw file to storage bucket
       setProgress("Caricamento file…");
-      const path = `archivio_ai/${category}/${Date.now()}-${sanitize(file.name)}`;
+      const path = `archivio_ai/${category}/${Date.now()}-${sanitizeFilename(file.name)}`;
       const { error: upErr } = await supabase.storage
         .from("documents")
         .upload(path, file, {
