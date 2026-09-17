@@ -22,6 +22,7 @@ import {
   X,
   Trash2,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -314,12 +315,29 @@ function DocsTab() {
                     <td className="px-4 py-3 text-xs">{d.categoria}</td>
                     <td className="px-4 py-3 text-xs">{d.page_count ?? "—"}</td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleDelete(d.id)}
-                        className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-destructive/15 text-destructive border border-destructive/30 hover:bg-destructive/25"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" /> Elimina
-                      </button>
+                      <div className="inline-flex gap-1.5">
+                        {d.doc_type === "pdf" && (
+                          <button
+                            onClick={() => handleReindex(d)}
+                            disabled={reindexing === d.id}
+                            title="Rilegge il PDF per aggiungere i numeri di riga"
+                            className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface disabled:opacity-50"
+                          >
+                            {reindexing === d.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-3.5 w-3.5" />
+                            )}
+                            Re-indicizza
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDelete(d.id)}
+                          className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-destructive/15 text-destructive border border-destructive/30 hover:bg-destructive/25"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Elimina
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
