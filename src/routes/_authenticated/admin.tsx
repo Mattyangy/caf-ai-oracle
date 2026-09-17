@@ -7,9 +7,12 @@ import { listUsers, setUserStatus } from "@/lib/users.functions";
 import {
   ingestDocument,
   deleteDocument,
+  reindexDocument,
+  getDocumentUrl,
   ARCHIVE_CATEGORIES,
   type ArchiveCategory,
 } from "@/lib/documents.functions";
+import { extractFile, extractPdf, sanitizeFilename } from "@/lib/pdf-extract";
 import {
   ArrowLeft,
   Users,
