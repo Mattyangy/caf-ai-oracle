@@ -17,7 +17,6 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/chat")({
