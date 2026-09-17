@@ -328,9 +328,9 @@ function UploadCard({
     try {
       // 1) Extract text client-side
       setProgress("Estrazione del testo…");
-      const { chunks, pageCount } = isPdf
-        ? await extractPdf(file, (p) => setProgress(`Estrazione pagina ${p}…`))
-        : await extractMarkdown(file);
+      const { chunks, pageCount } = await extractFile(file, (p, total) =>
+        setProgress(`Estrazione pagina ${p} di ${total}…`),
+      );
 
       if (chunks.length === 0) throw new Error("Nessun testo estratto dal file");
 
