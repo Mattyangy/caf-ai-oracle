@@ -225,6 +225,9 @@ function DocsTab() {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<ArchiveCategory>("circolari");
   const deleteFn = useServerFn(deleteDocument);
+  const reindexFn = useServerFn(reindexDocument);
+  const urlFn = useServerFn(getDocumentUrl);
+  const [reindexing, setReindexing] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
@@ -248,6 +251,29 @@ function DocsTab() {
       refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Errore");
+    }
+  }
+
+  /**
+   * Re-extract an already-uploaded PDF so its index gains the line numbers
+   * (documents uploaded before this feature only report the page).
+   */
+  async function handleReindex(doc: Doc) {
+    setReindexing(doc.id);
+    try {
+      const { url } = await urlFn({ data: { document_id: doc.id, page: null } });
+      const buffer = await (await fetch(url)).arrayBuffer();
+      const { chunks, pageCount } = await extractPdf(buffer);
+      if (chunks.length === 0) throw new Error("Nessun testo estratto");
+      await reindexFn({
+        data: { document_id: doc.id, page_count: pageCount, chunks },
+      });
+      toast.success("Documento re-indicizzato con i numeri di riga");
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Errore re-indicizzazione");
+    } finally {
+      setReindexing(null);
     }
   }
 
