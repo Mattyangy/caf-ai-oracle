@@ -7,9 +7,12 @@ import { listUsers, setUserStatus } from "@/lib/users.functions";
 import {
   ingestDocument,
   deleteDocument,
+  reindexDocument,
+  getDocumentUrl,
   ARCHIVE_CATEGORIES,
   type ArchiveCategory,
 } from "@/lib/documents.functions";
+import { extractFile, extractPdf, sanitizeFilename } from "@/lib/pdf-extract";
 import {
   ArrowLeft,
   Users,
@@ -19,6 +22,7 @@ import {
   X,
   Trash2,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -222,6 +226,9 @@ function DocsTab() {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<ArchiveCategory>("circolari");
   const deleteFn = useServerFn(deleteDocument);
+  const reindexFn = useServerFn(reindexDocument);
+  const urlFn = useServerFn(getDocumentUrl);
+  const [reindexing, setReindexing] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
@@ -245,6 +252,29 @@ function DocsTab() {
       refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Errore");
+    }
+  }
+
+  /**
+   * Re-extract an already-uploaded PDF so its index gains the line numbers
+   * (documents uploaded before this feature only report the page).
+   */
+  async function handleReindex(doc: Doc) {
+    setReindexing(doc.id);
+    try {
+      const { url } = await urlFn({ data: { document_id: doc.id, page: null } });
+      const buffer = await (await fetch(url)).arrayBuffer();
+      const { chunks, pageCount } = await extractPdf(buffer);
+      if (chunks.length === 0) throw new Error("Nessun testo estratto");
+      await reindexFn({
+        data: { document_id: doc.id, page_count: pageCount, chunks },
+      });
+      toast.success("Documento re-indicizzato con i numeri di riga");
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Errore re-indicizzazione");
+    } finally {
+      setReindexing(null);
     }
   }
 
@@ -285,12 +315,29 @@ function DocsTab() {
                     <td className="px-4 py-3 text-xs">{d.categoria}</td>
                     <td className="px-4 py-3 text-xs">{d.page_count ?? "—"}</td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleDelete(d.id)}
-                        className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-destructive/15 text-destructive border border-destructive/30 hover:bg-destructive/25"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" /> Elimina
-                      </button>
+                      <div className="inline-flex gap-1.5">
+                        {d.doc_type === "pdf" && (
+                          <button
+                            onClick={() => handleReindex(d)}
+                            disabled={reindexing === d.id}
+                            title="Rilegge il PDF per aggiungere i numeri di riga"
+                            className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface disabled:opacity-50"
+                          >
+                            {reindexing === d.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-3.5 w-3.5" />
+                            )}
+                            Re-indicizza
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDelete(d.id)}
+                          className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-destructive/15 text-destructive border border-destructive/30 hover:bg-destructive/25"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Elimina
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -328,15 +375,15 @@ function UploadCard({
     try {
       // 1) Extract text client-side
       setProgress("Estrazione del testo…");
-      const { chunks, pageCount } = isPdf
-        ? await extractPdf(file, (p) => setProgress(`Estrazione pagina ${p}…`))
-        : await extractMarkdown(file);
+      const { chunks, pageCount } = await extractFile(file, (p, total) =>
+        setProgress(`Estrazione pagina ${p} di ${total}…`),
+      );
 
       if (chunks.length === 0) throw new Error("Nessun testo estratto dal file");
 
       // 2) Upload raw file to storage bucket
       setProgress("Caricamento file…");
-      const path = `archivio_ai/${category}/${Date.now()}-${sanitize(file.name)}`;
+      const path = `archivio_ai/${category}/${Date.now()}-${sanitizeFilename(file.name)}`;
       const { error: upErr } = await supabase.storage
         .from("documents")
         .upload(path, file, {
@@ -431,59 +478,7 @@ function UploadCard({
   );
 }
 
-/* ---------------- Parsing helpers ---------------- */
-
-type ExtractedChunk = { page_number: number | null; chunk_index: number; content: string };
-
-function sanitize(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
-}
-
-// Roughly 1200 chars per chunk keeps FTS relevance high without ballooning the DB.
-function chunkText(text: string, chunkSize = 1200): string[] {
-  const clean = text.replace(/\s+/g, " ").trim();
-  if (!clean) return [];
-  const out: string[] = [];
-  for (let i = 0; i < clean.length; i += chunkSize) {
-    out.push(clean.slice(i, i + chunkSize));
-  }
-  return out;
-}
-
-async function extractMarkdown(
-  file: File,
-): Promise<{ chunks: ExtractedChunk[]; pageCount: number | null }> {
-  const text = await file.text();
-  const parts = chunkText(text);
-  return {
-    chunks: parts.map((content, i) => ({ page_number: null, chunk_index: i, content })),
-    pageCount: null,
-  };
-}
-
-async function extractPdf(
-  file: File,
-  onPage: (p: number) => void,
-): Promise<{ chunks: ExtractedChunk[]; pageCount: number }> {
-  // pdfjs is imported dynamically so the admin bundle stays lean.
-  const pdfjs = await import("pdfjs-dist");
-  const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
-  pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
-
-  const buffer = await file.arrayBuffer();
-  const pdf = await pdfjs.getDocument({ data: buffer }).promise;
-  const chunks: ExtractedChunk[] = [];
-  let chunkIndex = 0;
-  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-    onPage(pageNum);
-    const page = await pdf.getPage(pageNum);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      .map((it) => ("str" in it ? (it as { str: string }).str : ""))
-      .join(" ");
-    for (const part of chunkText(pageText)) {
-      chunks.push({ page_number: pageNum, chunk_index: chunkIndex++, content: part });
-    }
-  }
-  return { chunks, pageCount: pdf.numPages };
-}
+/* ---------------- Parsing helpers ----------------
+ * The extraction logic (page + line numbers) lives in src/lib/pdf-extract.ts
+ * and is shared with the "Analizza documento" page.
+ */
