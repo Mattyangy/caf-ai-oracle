@@ -268,6 +268,22 @@ export type Database = {
         Returns: boolean
       }
       is_approved_operator: { Args: { _user_id: string }; Returns: boolean }
+      search_chunks: {
+        Args: { _categoria?: string; _limit?: number; _query: string }
+        Returns: {
+          categoria: string
+          content: string
+          doc_type: string
+          document_id: string
+          filename: string
+          id: string
+          line_end: number
+          line_start: number
+          page_number: number
+          rank: number
+          title: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "operator"

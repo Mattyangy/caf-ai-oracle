@@ -29,6 +29,13 @@
       "when": 1789458771897,
       "tag": "0003_add_line_range_to_document_chunks",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790840306880,
+      "tag": "0004_ranked_chunk_search",
+      "breakpoints": true
     }
   ]
 }

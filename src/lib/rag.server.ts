@@ -38,72 +38,41 @@ function adminClient(): SupabaseClient<Database> {
   );
 }
 
-/**
- * Convert a natural-language question into a Postgres websearch tsquery.
- * We keep it simple and let the built-in "italian" dictionary handle stemming.
- */
-function buildQuery(question: string): string {
-  return question
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .split(/\s+/)
-    .filter((w) => w.length >= 3)
-    .slice(0, 12)
-    .join(" & ") || question;
-}
-
-type ChunkRow = {
-  id: string;
-  document_id: string;
-  page_number: number | null;
-  line_start: number | null;
-  line_end: number | null;
-  content: string;
-  documents: {
-    title: string;
-    filename: string;
-    doc_type: string;
-    categoria: string;
-  } | null;
-};
-
-function toHits(rows: ChunkRow[]): SearchHit[] {
-  return rows.map((r) => ({
-    chunk_id: r.id,
-    document_id: r.document_id,
-    document_title: r.documents?.title ?? "Documento",
-    document_type: r.documents?.doc_type ?? "documento",
-    categoria: r.documents?.categoria ?? "documento",
-    filename: r.documents?.filename ?? "",
-    page_number: r.page_number,
-    line_start: r.line_start,
-    line_end: r.line_end,
-    content: r.content,
-    rank: 0,
-  }));
-}
 
 /**
- * Full-text search over document_chunks, ordered by relevance.
+ * Full-text search over document_chunks, ordered by relevance (ts_rank_cd).
+ * Uses the `search_chunks` SQL function: words are OR-ed and ranked, so
+ * natural-language questions still find the most relevant extracts.
  * `onlyCategoria` restricts the search to a single archive category.
  */
 async function search(
   supabase: SupabaseClient<Database>,
-  tsQuery: string,
+  question: string,
   limit: number,
   onlyCategoria?: string,
 ): Promise<SearchHit[]> {
-  let q = supabase
-    .from("document_chunks")
-    .select(
-      "id, document_id, page_number, line_start, line_end, content, documents!inner(title, filename, doc_type, categoria)",
-    )
-    .textSearch("content_tsv", tsQuery, { config: "italian", type: "websearch" });
-
-  if (onlyCategoria) q = q.eq("documents.categoria", onlyCategoria);
-
-  const { data: rows, error } = await q.limit(limit);
-  if (error || !rows) return [];
-  return toHits(rows as unknown as ChunkRow[]);
+  const { data, error } = await supabase.rpc("search_chunks", {
+    _query: question.replace(/[^\p{L}\p{N}\s]/gu, " "),
+    _categoria: onlyCategoria ?? undefined,
+    _limit: limit,
+  });
+  if (error || !data) {
+    if (error) console.error("search_chunks failed", error);
+    return [];
+  }
+  return data.map((r) => ({
+    chunk_id: r.id,
+    document_id: r.document_id,
+    document_title: r.title,
+    document_type: r.doc_type,
+    categoria: r.categoria,
+    filename: r.filename,
+    page_number: r.page_number,
+    line_start: r.line_start,
+    line_end: r.line_end,
+    content: r.content,
+    rank: r.rank,
+  }));
 }
 
 /**
@@ -112,12 +81,11 @@ async function search(
  */
 export async function searchArchive(question: string, limit = 6): Promise<SearchHit[]> {
   const supabase = adminClient();
-  const tsQuery = buildQuery(question);
 
-  const circolari = await search(supabase, tsQuery, limit, "circolari");
+  const circolari = await search(supabase, question, limit, "circolari");
   if (circolari.length >= limit) return circolari;
 
-  const others = await search(supabase, tsQuery, limit);
+  const others = await search(supabase, question, limit);
   const seen = new Set(circolari.map((h) => h.chunk_id));
   const rest = others.filter((h) => !seen.has(h.chunk_id));
 
@@ -129,8 +97,7 @@ export async function searchArchive(question: string, limit = 6): Promise<Search
  * "Ricerca circolari" page, which must never mix in other sources.
  */
 export async function searchCircolari(question: string, limit = 8): Promise<SearchHit[]> {
-  const supabase = adminClient();
-  return search(supabase, buildQuery(question), limit, "circolari");
+  return search(adminClient(), question, limit, "circolari");
 }
 
 /** Prompt for the dedicated circular-search answer (short, always cited). */
