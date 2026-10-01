@@ -83,27 +83,39 @@ function toHits(rows: ChunkRow[]): SearchHit[] {
 }
 
 /**
- * Full-text search over document_chunks, ordered by relevance.
+ * Full-text search over document_chunks, ordered by relevance (ts_rank_cd).
+ * Uses the `search_chunks` SQL function: words are OR-ed and ranked, so
+ * natural-language questions still find the most relevant extracts.
  * `onlyCategoria` restricts the search to a single archive category.
  */
 async function search(
   supabase: SupabaseClient<Database>,
-  tsQuery: string,
+  question: string,
   limit: number,
   onlyCategoria?: string,
 ): Promise<SearchHit[]> {
-  let q = supabase
-    .from("document_chunks")
-    .select(
-      "id, document_id, page_number, line_start, line_end, content, documents!inner(title, filename, doc_type, categoria)",
-    )
-    .textSearch("content_tsv", tsQuery, { config: "italian", type: "websearch" });
-
-  if (onlyCategoria) q = q.eq("documents.categoria", onlyCategoria);
-
-  const { data: rows, error } = await q.limit(limit);
-  if (error || !rows) return [];
-  return toHits(rows as unknown as ChunkRow[]);
+  const { data, error } = await supabase.rpc("search_chunks", {
+    _query: question.replace(/[^\p{L}\p{N}\s]/gu, " "),
+    _categoria: onlyCategoria ?? undefined,
+    _limit: limit,
+  });
+  if (error || !data) {
+    if (error) console.error("search_chunks failed", error);
+    return [];
+  }
+  return data.map((r) => ({
+    chunk_id: r.id,
+    document_id: r.document_id,
+    document_title: r.title,
+    document_type: r.doc_type,
+    categoria: r.categoria,
+    filename: r.filename,
+    page_number: r.page_number,
+    line_start: r.line_start,
+    line_end: r.line_end,
+    content: r.content,
+    rank: r.rank,
+  }));
 }
 
 /**
