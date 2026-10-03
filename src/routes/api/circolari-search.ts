@@ -18,7 +18,11 @@ export const Route = createFileRoute("/api/circolari-search")({
         const auth = await requireApprovedUser(request);
         if (!auth.ok) return auth.response;
 
-        const body = (await request.json()) as { question?: string };
+        const body = (await request.json()) as {
+          question?: string;
+          engine?: string;
+          attachment?: { names?: string[]; transcript?: string } | null;
+        };
         const question = (body.question ?? "").trim();
         if (!question) return new Response("Bad Request", { status: 400 });
 
@@ -35,10 +39,16 @@ export const Route = createFileRoute("/api/circolari-search")({
           excerpt: h.content.slice(0, 600),
         }));
 
-        const provider = getAiProvider((body as { engine?: string }).engine);
+        const provider = getAiProvider(body.engine);
         const result = streamText({
           model: provider.chatModel(),
-          system: buildCircolariPrompt(hits),
+          system: body.attachment?.transcript
+            ? `${buildCircolariPrompt(hits)}
+
+===== DOCUMENTO ALLEGATO DALL'OPERATORE (${(body.attachment.names ?? []).join(", ")}) =====
+Testo numerato [p<pagina> r<riga>]. Usalo per confrontarlo con le circolari e cita pagina e riga.
+${body.attachment.transcript.slice(0, 300_000)}`
+            : buildCircolariPrompt(hits),
           messages: [{ role: "user", content: question }],
           ...(provider.chatProviderOptions
             ? { providerOptions: provider.chatProviderOptions }
