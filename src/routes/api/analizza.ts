@@ -52,7 +52,7 @@ Istruzioni obbligatorie:
           { role: "user" as const, content: question },
         ];
 
-        const provider = getAiProvider();
+        const provider = getAiProvider((body as { engine?: string }).engine);
         const result = streamText({
           model: provider.chatModel(),
           system,

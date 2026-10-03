@@ -9,6 +9,7 @@ import {
   WelcomeHeader,
   docsToTranscript,
   useAiEngine,
+  attachKey,
   type AttachedDoc,
 } from "@/components/HomeComposer";
 
@@ -22,9 +23,6 @@ const SUGGESTIONS = [
   "Come funziona il Bonus Asilo Nido quest'anno?",
   "Requisiti per l'Assegno di Inclusione (ADI) 2026?",
 ];
-
-/** sessionStorage key holding documents attached to a thread (never persisted server-side). */
-export const attachKey = (threadId: string) => `caf-attach-${threadId}`;
 
 function ChatHome() {
   const { user, profile } = useAuth();

@@ -12,6 +12,9 @@ import { AI_ENGINES, DEFAULT_ENGINE, isAiEngineId, type AiEngineId } from "@/lib
 
 export type AttachedDoc = { name: string; transcript: string; pageCount: number | null };
 
+/** sessionStorage key holding documents attached to a chat thread (never stored server-side). */
+export const attachKey = (threadId: string) => `caf-attach-${threadId}`;
+
 const ENGINE_KEY = "caf-ai-engine";
 
 /** Persisted engine choice shared across pages. */

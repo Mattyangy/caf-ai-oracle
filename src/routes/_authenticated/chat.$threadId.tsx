@@ -14,6 +14,8 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
+import { attachKey, useAiEngine } from "@/components/HomeComposer";
+import { AI_ENGINES, type AiEngineId } from "@/lib/ai/models";
 
 type Source = {
   document_id: string;
@@ -53,6 +55,13 @@ function ThreadPage() {
   const [busy, setBusy] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const autoRan = useRef(false);
+  const [engine, setEngine] = useAiEngine();
+  // Documents attached from the home page (kept only in this browser tab).
+  const [attachment, setAttachment] = useState<{ names: string[]; transcript: string } | null>(null);
+  useEffect(() => {
+    const raw = sessionStorage.getItem(attachKey(threadId));
+    setAttachment(raw ? JSON.parse(raw) : null);
+  }, [threadId]);
 
   const { data: initial, isLoading } = useQuery({
     queryKey: ["thread-messages", threadId],
@@ -130,7 +139,12 @@ function ThreadPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ threadId, messages: history }),
+          body: JSON.stringify({
+            threadId,
+            messages: history,
+            engine,
+            attachment: attachment ?? JSON.parse(sessionStorage.getItem(attachKey(threadId)) || "null"),
+          }),
         });
         if (!res.ok || !res.body) {
           const text = await res.text().catch(() => "");
@@ -176,7 +190,7 @@ function ThreadPage() {
         setBusy(false);
       }
     },
-    [messages, threadId, qc],
+    [messages, threadId, qc, engine, attachment],
   );
 
   // Auto-run: home page created a thread with a seed user message. Reply once.
@@ -258,6 +272,23 @@ function ThreadPage() {
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+            <select
+              value={engine}
+              onChange={(e) => setEngine(e.target.value as AiEngineId)}
+              className="text-[11px] bg-surface border border-border rounded-md px-1.5 py-1 text-foreground"
+              aria-label="Motore AI"
+            >
+              {AI_ENGINES.map((m) => (
+                <option key={m.id} value={m.id}>{m.label}</option>
+              ))}
+            </select>
+            {attachment && (
+              <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+                <FileText className="h-3 w-3 text-primary" /> Allegati: {attachment.names.join(", ")}
+              </span>
+            )}
           </div>
           <p className="text-[11px] text-muted-foreground text-center mt-2">
             CAF AI può commettere errori. Verifica le informazioni presso le fonti ufficiali.
