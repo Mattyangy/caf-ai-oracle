@@ -15,6 +15,7 @@ type Body = {
   question?: string;
   transcript?: string;
   filename?: string;
+  engine?: string;
   history?: Array<{ role: "user" | "assistant"; content: string }>;
 };
 
@@ -52,7 +53,7 @@ Istruzioni obbligatorie:
           { role: "user" as const, content: question },
         ];
 
-        const provider = getAiProvider();
+        const provider = getAiProvider(body.engine);
         const result = streamText({
           model: provider.chatModel(),
           system,

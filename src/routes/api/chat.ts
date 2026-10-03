@@ -22,7 +22,14 @@ import {
 import { getAiProvider } from "@/lib/ai/index.server";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
-type ChatBody = { threadId?: string; messages?: ChatMessage[] };
+type ChatBody = {
+  threadId?: string;
+  messages?: ChatMessage[];
+  /** "chatgpt" | "gemini" — see src/lib/ai/models.ts */
+  engine?: string;
+  /** Documents attached by the operator, extracted in the browser. Never stored. */
+  attachment?: { names?: string[]; transcript?: string } | null;
+};
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -78,10 +85,19 @@ export const Route = createFileRoute("/api/chat")({
         const hits = question ? await searchArchive(question, 6) : [];
         const sources = buildSourcesPayload(hits);
         const reliability = estimateReliability(hits);
-        const systemPrompt = buildSystemPrompt(hits);
+        const attachedText = (body.attachment?.transcript ?? "").slice(0, 400_000);
+        const systemPrompt = attachedText
+          ? `${buildSystemPrompt(hits)}
+
+===== DOCUMENTI ALLEGATI DALL'OPERATORE (${(body.attachment?.names ?? []).join(", ")}) =====
+Il testo è numerato nel formato [p<pagina> r<riga>].
+${attachedText}
+=====================
+Se la domanda riguarda i documenti allegati, rispondi basandoti su di essi e cita sempre pagina e riga (es. "pagina 2, righe 14-17").`
+          : buildSystemPrompt(hits);
 
         // 2) Stream response from configured AI provider
-        const provider = getAiProvider();
+        const provider = getAiProvider(body.engine);
         const model = provider.chatModel();
 
         const modelMessages: ModelMessage[] = messages.map((m) => ({
