@@ -7,9 +7,9 @@
  * Sì / No / Non chiaro verdict plus citations with page and line.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { streamText, type ModelMessage } from "ai";
+import type { ModelMessage } from "ai";
 import { requireApprovedUser } from "@/lib/api-auth.server";
-import { getAiProvider } from "@/lib/ai/index.server";
+import { bestOfAnswer, textResponse } from "@/lib/ai/best-of.server";
 
 type Body = {
   question?: string;
@@ -53,17 +53,11 @@ Istruzioni obbligatorie:
           { role: "user" as const, content: question },
         ];
 
-        const provider = getAiProvider(body.engine);
-        const result = streamText({
-          model: provider.chatModel(),
-          system,
-          messages,
-          ...(provider.chatProviderOptions
-            ? { providerOptions: provider.chatProviderOptions }
-            : {}),
-        });
-
-        return result.toTextStreamResponse();
+        try {
+          return textResponse(await bestOfAnswer(system, messages));
+        } catch (err) {
+          return new Response(err instanceof Error ? err.message : "Errore AI", { status: 502 });
+        }
       },
     },
   },
