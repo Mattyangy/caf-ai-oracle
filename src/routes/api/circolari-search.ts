@@ -6,10 +6,9 @@
  * "Apri PDF alla pagina" / "Stampa" buttons immediately.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { streamText } from "ai";
 import { requireApprovedUser } from "@/lib/api-auth.server";
 import { buildCircolariPrompt, searchCircolari } from "@/lib/rag.server";
-import { getAiProvider } from "@/lib/ai/index.server";
+import { bestOfAnswer, textResponse } from "@/lib/ai/best-of.server";
 
 export const Route = createFileRoute("/api/circolari-search")({
   server: {
@@ -39,27 +38,23 @@ export const Route = createFileRoute("/api/circolari-search")({
           excerpt: h.content.slice(0, 600),
         }));
 
-        const provider = getAiProvider(body.engine);
-        const result = streamText({
-          model: provider.chatModel(),
-          system: body.attachment?.transcript
-            ? `${buildCircolariPrompt(hits)}
+        const system = body.attachment?.transcript
+          ? `${buildCircolariPrompt(hits)}
 
 ===== DOCUMENTO ALLEGATO DALL'OPERATORE (${(body.attachment.names ?? []).join(", ")}) =====
 Testo numerato [p<pagina> r<riga>]. Usalo per confrontarlo con le circolari e cita pagina e riga.
 ${body.attachment.transcript.slice(0, 300_000)}`
-            : buildCircolariPrompt(hits),
-          messages: [{ role: "user", content: question }],
-          ...(provider.chatProviderOptions
-            ? { providerOptions: provider.chatProviderOptions }
-            : {}),
-        });
+          : buildCircolariPrompt(hits);
 
-        return result.toTextStreamResponse({
-          headers: {
-            "X-Caf-Hits": encodeURIComponent(JSON.stringify(payload)),
-            "Access-Control-Expose-Headers": "X-Caf-Hits",
-          },
+        let text: string;
+        try {
+          text = await bestOfAnswer(system, [{ role: "user", content: question }]);
+        } catch (err) {
+          return new Response(err instanceof Error ? err.message : "Errore AI", { status: 502 });
+        }
+        return textResponse(text, {
+          "X-Caf-Hits": encodeURIComponent(JSON.stringify(payload)),
+          "Access-Control-Expose-Headers": "X-Caf-Hits",
         });
       },
     },

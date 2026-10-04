@@ -10,7 +10,7 @@
  * coupling with a specific vendor. Swap providers in src/lib/ai/index.server.ts.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { streamText, type ModelMessage } from "ai";
+import type { ModelMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import {
@@ -19,7 +19,7 @@ import {
   estimateReliability,
   searchArchive,
 } from "@/lib/rag.server";
-import { getAiProvider } from "@/lib/ai/index.server";
+import { bestOfAnswer, textResponse } from "@/lib/ai/best-of.server";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 type ChatBody = {
@@ -96,60 +96,42 @@ ${attachedText}
 Se la domanda riguarda i documenti allegati, rispondi basandoti su di essi e cita sempre pagina e riga (es. "pagina 2, righe 14-17").`
           : buildSystemPrompt(hits);
 
-        // 2) Stream response from configured AI provider
-        const provider = getAiProvider(body.engine);
-        const model = provider.chatModel();
-
+        // 2) Ask ChatGPT and Gemini, keep the best answer
         const modelMessages: ModelMessage[] = messages.map((m) => ({
           role: m.role,
           content: m.content,
         }));
+        let text: string;
+        try {
+          text = await bestOfAnswer(systemPrompt, modelMessages);
+        } catch (err) {
+          return new Response(err instanceof Error ? err.message : "Errore AI", { status: 502 });
+        }
 
-        const result = streamText({
-          model,
-          system: systemPrompt,
-          messages: modelMessages,
-          ...(provider.chatProviderOptions
-            ? { providerOptions: provider.chatProviderOptions }
-            : {}),
-          onFinish: async ({ text }) => {
-            // Persist assistant message + sources with service role (bypass RLS
-            // safely since we've already authorized the caller).
-            try {
-              const admin = createClient<Database>(
-                url,
-                process.env.SUPABASE_SERVICE_ROLE_KEY!,
-                { auth: { persistSession: false, autoRefreshToken: false } },
-              );
-              await admin.from("chat_messages").insert({
-                thread_id: threadId,
-                role: "assistant",
-                content: text,
-                sources: sources as unknown as Database["public"]["Tables"]["chat_messages"]["Insert"]["sources"],
-                reliability: reliability.label,
-                reliability_score: reliability.score,
-              });
-              await admin
-                .from("chat_threads")
-                .update({ updated_at: new Date().toISOString() })
-                .eq("id", threadId);
-            } catch (err) {
-              console.error("Persist assistant message failed", err);
-            }
-          },
-        });
+        try {
+          const admin = createClient<Database>(url, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+            auth: { persistSession: false, autoRefreshToken: false },
+          });
+          await admin.from("chat_messages").insert({
+            thread_id: threadId,
+            role: "assistant",
+            content: text,
+            sources: sources as unknown as Database["public"]["Tables"]["chat_messages"]["Insert"]["sources"],
+            reliability: reliability.label,
+            reliability_score: reliability.score,
+          });
+          await admin
+            .from("chat_threads")
+            .update({ updated_at: new Date().toISOString() })
+            .eq("id", threadId);
+        } catch (err) {
+          console.error("Persist assistant message failed", err);
+        }
 
-        // Return a plain text stream. Sources + reliability are emitted as
-        // response headers so the client can render them immediately without
-        // having to parse the AI SDK UI message envelope.
-        return result.toTextStreamResponse({
-          headers: {
-            "X-Caf-Sources": encodeURIComponent(JSON.stringify(sources)),
-            "X-Caf-Reliability": encodeURIComponent(
-              JSON.stringify(reliability),
-            ),
-            "Access-Control-Expose-Headers": "X-Caf-Sources, X-Caf-Reliability",
-          },
+        return textResponse(text, {
+          "X-Caf-Sources": encodeURIComponent(JSON.stringify(sources)),
+          "X-Caf-Reliability": encodeURIComponent(JSON.stringify(reliability)),
+          "Access-Control-Expose-Headers": "X-Caf-Sources, X-Caf-Reliability",
         });
       },
     },

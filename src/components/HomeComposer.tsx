@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Paperclip, Send, Loader2, FileText, X } from "lucide-react";
 import { toast } from "sonner";
 import { extractFile, pagesToTranscript } from "@/lib/pdf-extract";
-import { AI_ENGINES, DEFAULT_ENGINE, isAiEngineId, type AiEngineId } from "@/lib/ai/models";
+import { DEFAULT_ENGINE, isAiEngineId, type AiEngineId } from "@/lib/ai/models";
 
 export type AttachedDoc = { name: string; transcript: string; pageCount: number | null };
 
@@ -51,8 +51,8 @@ type Props = {
   keepDocs?: boolean;
   docs: AttachedDoc[];
   onDocsChange: (docs: AttachedDoc[]) => void;
-  engine: AiEngineId;
-  onEngineChange: (e: AiEngineId) => void;
+  engine?: AiEngineId;
+  onEngineChange?: (e: AiEngineId) => void;
   onSubmit: (text: string) => void;
   autoFocus?: boolean;
 };
@@ -206,18 +206,7 @@ export function HomeComposer({
                 {extracting ? progress || "Lettura…" : "Allega"}
               </span>
             </button>
-            <select
-              value={engine}
-              onChange={(e) => onEngineChange(e.target.value as AiEngineId)}
-              className="text-xs bg-background/60 border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none"
-              aria-label="Motore AI"
-            >
-              {AI_ENGINES.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
+            <span className="text-[11px] text-muted-foreground">ChatGPT + Gemini</span>
           </div>
           <button
             type="submit"
