@@ -17,6 +17,7 @@ import { Route as ApiCircolariSearchRouteImport } from './routes/api/circolari-s
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiAnalizzaRouteImport } from './routes/api/analizza'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedPdfRouteImport } from './routes/_authenticated/pdf'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
@@ -63,6 +64,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPdfRoute = AuthenticatedPdfRouteImport.update({
+  id: '/pdf',
+  path: '/pdf',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   id: '/chat',
   path: '/chat',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
+  '/pdf': typeof AuthenticatedPdfRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/pdf': typeof AuthenticatedPdfRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
+  '/_authenticated/pdf': typeof AuthenticatedPdfRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/admin'
     | '/chat'
+    | '/pdf'
     | '/settings'
     | '/api/analizza'
     | '/api/chat'
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/admin'
+    | '/pdf'
     | '/settings'
     | '/api/analizza'
     | '/api/chat'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/admin'
     | '/_authenticated/chat'
+    | '/_authenticated/pdf'
     | '/_authenticated/settings'
     | '/api/analizza'
     | '/api/chat'
@@ -259,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pdf': {
+      id: '/_authenticated/pdf'
+      path: '/pdf'
+      fullPath: '/pdf'
+      preLoaderRoute: typeof AuthenticatedPdfRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chat': {
       id: '/_authenticated/chat'
       path: '/chat'
@@ -324,12 +343,14 @@ const AuthenticatedChatRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
+  AuthenticatedPdfRoute: typeof AuthenticatedPdfRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
+  AuthenticatedPdfRoute: AuthenticatedPdfRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }
 
