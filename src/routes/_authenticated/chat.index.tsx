@@ -14,6 +14,9 @@ import {
 } from "@/components/HomeComposer";
 
 export const Route = createFileRoute("/_authenticated/chat/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    n: typeof search.n === "number" ? search.n : 0,
+  }),
   component: ChatHome,
 });
 
