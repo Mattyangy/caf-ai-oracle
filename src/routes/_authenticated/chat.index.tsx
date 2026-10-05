@@ -28,6 +28,12 @@ const SUGGESTIONS = [
 ];
 
 function ChatHome() {
+  // Remount on every "Nuova chat" click so draft text and attachments reset.
+  const { n } = Route.useSearch();
+  return <ChatHomeInner key={n} />;
+}
+
+function ChatHomeInner() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
