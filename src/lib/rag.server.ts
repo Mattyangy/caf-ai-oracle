@@ -130,7 +130,7 @@ Istruzioni:
 1. Rispondi in italiano, in modo sintetico e operativo (massimo 10 righe).
 2. Cita sempre la circolare, la pagina e le righe da cui proviene ogni informazione (es. "Circolare X, pagina 3, righe 12-18").
 3. Se le circolari non rispondono alla domanda, dillo chiaramente invece di inventare.
-4. Numera ogni informazione con il numero dell'estratto tra parentesi quadre, es. [1], [2], seguito da circolare, pagina e righe. Se ci sono più risposte, elencale numerate.`;
+4. Numera ogni informazione con il numero dell'estratto tra parentesi quadre, es. [1], [2], seguito da circolare, pagina e righe. Se ci sono più risposte, elencale numerate. Cita SOLO gli estratti che rispondono davvero alla domanda: non citare estratti non pertinenti.`;
 }
 
 /**

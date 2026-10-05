@@ -7,7 +7,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
-import { BookOpen, FileText, ExternalLink, Printer } from "lucide-react";
+import { BookOpen, ExternalLink, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getDocumentUrl } from "@/lib/documents.functions";
@@ -20,6 +20,7 @@ import {
 } from "@/components/HomeComposer";
 
 type Hit = {
+  n: number;
   document_id: string;
   title: string;
   filename: string;
@@ -197,7 +198,7 @@ function CircolariPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 text-sm font-medium">
-                            <FileText className="h-4 w-4 text-primary shrink-0" />
+                            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-bold">{hit.n}</span>
                             <span className="truncate">{hit.title}</span>
                           </div>
                           <div className="text-xs text-muted-foreground mt-0.5">
@@ -207,10 +208,10 @@ function CircolariPage() {
                           </div>
                         </div>
                         <div className="flex gap-1.5 shrink-0">
-                          <button onClick={() => open(hit, false, i + 1)} className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface">
+                          <button onClick={() => open(hit, false, hit.n)} className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface">
                             <ExternalLink className="h-3.5 w-3.5" /> Apri
                           </button>
-                          <button onClick={() => open(hit, true, i + 1)} className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface">
+                          <button onClick={() => open(hit, true, hit.n)} className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface">
                             <Printer className="h-3.5 w-3.5" /> Stampa
                           </button>
                         </div>
