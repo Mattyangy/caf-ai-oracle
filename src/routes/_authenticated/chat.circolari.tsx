@@ -32,7 +32,7 @@ type Hit = {
 
 type Result = { question: string; answer: string; hits: Hit[]; done: boolean };
 
-export const Route = createFileRoute("/_authenticated/circolari")({
+export const Route = createFileRoute("/_authenticated/chat/circolari")({
   head: () => ({
     meta: [
       { title: "Ricerca circolari — CAF AI" },
