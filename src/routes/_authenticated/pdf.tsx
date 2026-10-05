@@ -6,21 +6,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { zodValidator, fallback } from "@tanstack/zod-adapter";
-import { z } from "zod";
 import { ChevronLeft, ChevronRight, Loader2, Printer } from "lucide-react";
 import { getDocumentUrl } from "@/lib/documents.functions";
 
-const searchSchema = z.object({
-  doc: fallback(z.string(), "").default(""),
-  page: fallback(z.number().int(), 1).default(1),
-  ls: fallback(z.number().int(), 0).default(0),
-  le: fallback(z.number().int(), 0).default(0),
-  n: fallback(z.number().int(), 0).default(0),
-});
+const int = (v: unknown, d: number) => {
+  const x = Number(v);
+  return Number.isFinite(x) ? Math.trunc(x) : d;
+};
 
 export const Route = createFileRoute("/_authenticated/pdf")({
-  validateSearch: zodValidator(searchSchema),
+  validateSearch: (s: Record<string, unknown>) => ({
+    doc: typeof s.doc === "string" ? s.doc : "",
+    page: int(s.page, 1),
+    ls: int(s.ls, 0),
+    le: int(s.le, 0),
+    n: int(s.n, 0),
+  }),
   head: () => ({
     meta: [
       { title: "Documento — CAF AI" },
