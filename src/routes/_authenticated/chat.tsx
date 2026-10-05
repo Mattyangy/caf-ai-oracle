@@ -68,7 +68,9 @@ function ChatLayout() {
    */
   function handleNewChat() {
     setSidebarOpen(false);
-    navigate({ to: "/chat" });
+    // Unique search param forces a full remount of the home screen,
+    // clearing any draft text or attached documents.
+    navigate({ to: "/chat", search: { n: Date.now() } as never });
     // Focus the composer (also when already on /chat, where no remount happens).
     window.setTimeout(() => {
       document.querySelector<HTMLTextAreaElement>("main textarea")?.focus();

@@ -14,6 +14,9 @@ import {
 } from "@/components/HomeComposer";
 
 export const Route = createFileRoute("/_authenticated/chat/")({
+  validateSearch: (search: Record<string, unknown>): { n?: number } => ({
+    n: typeof search.n === "number" ? search.n : undefined,
+  }),
   component: ChatHome,
 });
 
@@ -25,6 +28,12 @@ const SUGGESTIONS = [
 ];
 
 function ChatHome() {
+  // Remount on every "Nuova chat" click so draft text and attachments reset.
+  const { n } = Route.useSearch();
+  return <ChatHomeInner key={n} />;
+}
+
+function ChatHomeInner() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
