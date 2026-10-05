@@ -19,7 +19,7 @@ import {
 
 type QA = { question: string; answer: string };
 
-export const Route = createFileRoute("/_authenticated/analizza")({
+export const Route = createFileRoute("/_authenticated/chat/analizza")({
   head: () => ({
     meta: [
       { title: "Analizza documenti — CAF AI" },

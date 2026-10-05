@@ -17,11 +17,12 @@ import { Route as ApiCircolariSearchRouteImport } from './routes/api/circolari-s
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiAnalizzaRouteImport } from './routes/api/analizza'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedCircolariRouteImport } from './routes/_authenticated/circolari'
+import { Route as AuthenticatedPdfRouteImport } from './routes/_authenticated/pdf'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
-import { Route as AuthenticatedAnalizzaRouteImport } from './routes/_authenticated/analizza'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
+import { Route as AuthenticatedChatCircolariRouteImport } from './routes/_authenticated/chat.circolari'
+import { Route as AuthenticatedChatAnalizzaRouteImport } from './routes/_authenticated/chat.analizza'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -63,19 +64,14 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCircolariRoute = AuthenticatedCircolariRouteImport.update({
-  id: '/circolari',
-  path: '/circolari',
+const AuthenticatedPdfRoute = AuthenticatedPdfRouteImport.update({
+  id: '/pdf',
+  path: '/pdf',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   id: '/chat',
   path: '/chat',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAnalizzaRoute = AuthenticatedAnalizzaRouteImport.update({
-  id: '/analizza',
-  path: '/analizza',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -88,6 +84,18 @@ const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedChatRoute,
 } as any)
+const AuthenticatedChatCircolariRoute =
+  AuthenticatedChatCircolariRouteImport.update({
+    id: '/circolari',
+    path: '/circolari',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
+const AuthenticatedChatAnalizzaRoute =
+  AuthenticatedChatAnalizzaRouteImport.update({
+    id: '/analizza',
+    path: '/analizza',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
 const AuthenticatedChatThreadIdRoute =
   AuthenticatedChatThreadIdRouteImport.update({
     id: '/$threadId',
@@ -100,14 +108,15 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/analizza': typeof AuthenticatedAnalizzaRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
-  '/circolari': typeof AuthenticatedCircolariRoute
+  '/pdf': typeof AuthenticatedPdfRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
   '/api/circolari-search': typeof ApiCircolariSearchRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/chat/analizza': typeof AuthenticatedChatAnalizzaRoute
+  '/chat/circolari': typeof AuthenticatedChatCircolariRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRoutesByTo {
@@ -115,13 +124,14 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/analizza': typeof AuthenticatedAnalizzaRoute
-  '/circolari': typeof AuthenticatedCircolariRoute
+  '/pdf': typeof AuthenticatedPdfRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
   '/api/circolari-search': typeof ApiCircolariSearchRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/chat/analizza': typeof AuthenticatedChatAnalizzaRoute
+  '/chat/circolari': typeof AuthenticatedChatCircolariRoute
   '/chat': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRoutesById {
@@ -131,14 +141,15 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/_authenticated/analizza': typeof AuthenticatedAnalizzaRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
-  '/_authenticated/circolari': typeof AuthenticatedCircolariRoute
+  '/_authenticated/pdf': typeof AuthenticatedPdfRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
   '/api/circolari-search': typeof ApiCircolariSearchRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/_authenticated/chat/analizza': typeof AuthenticatedChatAnalizzaRoute
+  '/_authenticated/chat/circolari': typeof AuthenticatedChatCircolariRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRouteTypes {
@@ -148,14 +159,15 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/admin'
-    | '/analizza'
     | '/chat'
-    | '/circolari'
+    | '/pdf'
     | '/settings'
     | '/api/analizza'
     | '/api/chat'
     | '/api/circolari-search'
     | '/chat/$threadId'
+    | '/chat/analizza'
+    | '/chat/circolari'
     | '/chat/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -163,13 +175,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/admin'
-    | '/analizza'
-    | '/circolari'
+    | '/pdf'
     | '/settings'
     | '/api/analizza'
     | '/api/chat'
     | '/api/circolari-search'
     | '/chat/$threadId'
+    | '/chat/analizza'
+    | '/chat/circolari'
     | '/chat'
   id:
     | '__root__'
@@ -178,14 +191,15 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/admin'
-    | '/_authenticated/analizza'
     | '/_authenticated/chat'
-    | '/_authenticated/circolari'
+    | '/_authenticated/pdf'
     | '/_authenticated/settings'
     | '/api/analizza'
     | '/api/chat'
     | '/api/circolari-search'
     | '/_authenticated/chat/$threadId'
+    | '/_authenticated/chat/analizza'
+    | '/_authenticated/chat/circolari'
     | '/_authenticated/chat/'
   fileRoutesById: FileRoutesById
 }
@@ -257,11 +271,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/circolari': {
-      id: '/_authenticated/circolari'
-      path: '/circolari'
-      fullPath: '/circolari'
-      preLoaderRoute: typeof AuthenticatedCircolariRouteImport
+    '/_authenticated/pdf': {
+      id: '/_authenticated/pdf'
+      path: '/pdf'
+      fullPath: '/pdf'
+      preLoaderRoute: typeof AuthenticatedPdfRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/chat': {
@@ -269,13 +283,6 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/chat'
       preLoaderRoute: typeof AuthenticatedChatRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/analizza': {
-      id: '/_authenticated/analizza'
-      path: '/analizza'
-      fullPath: '/analizza'
-      preLoaderRoute: typeof AuthenticatedAnalizzaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
@@ -292,6 +299,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatIndexRouteImport
       parentRoute: typeof AuthenticatedChatRoute
     }
+    '/_authenticated/chat/circolari': {
+      id: '/_authenticated/chat/circolari'
+      path: '/circolari'
+      fullPath: '/chat/circolari'
+      preLoaderRoute: typeof AuthenticatedChatCircolariRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
+    '/_authenticated/chat/analizza': {
+      id: '/_authenticated/chat/analizza'
+      path: '/analizza'
+      fullPath: '/chat/analizza'
+      preLoaderRoute: typeof AuthenticatedChatAnalizzaRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
     '/_authenticated/chat/$threadId': {
       id: '/_authenticated/chat/$threadId'
       path: '/$threadId'
@@ -304,11 +325,15 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedChatRouteChildren {
   AuthenticatedChatThreadIdRoute: typeof AuthenticatedChatThreadIdRoute
+  AuthenticatedChatAnalizzaRoute: typeof AuthenticatedChatAnalizzaRoute
+  AuthenticatedChatCircolariRoute: typeof AuthenticatedChatCircolariRoute
   AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
 }
 
 const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
   AuthenticatedChatThreadIdRoute: AuthenticatedChatThreadIdRoute,
+  AuthenticatedChatAnalizzaRoute: AuthenticatedChatAnalizzaRoute,
+  AuthenticatedChatCircolariRoute: AuthenticatedChatCircolariRoute,
   AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
 }
 
@@ -317,17 +342,15 @@ const AuthenticatedChatRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-  AuthenticatedAnalizzaRoute: typeof AuthenticatedAnalizzaRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
-  AuthenticatedCircolariRoute: typeof AuthenticatedCircolariRoute
+  AuthenticatedPdfRoute: typeof AuthenticatedPdfRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-  AuthenticatedAnalizzaRoute: AuthenticatedAnalizzaRoute,
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
-  AuthenticatedCircolariRoute: AuthenticatedCircolariRoute,
+  AuthenticatedPdfRoute: AuthenticatedPdfRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }
 

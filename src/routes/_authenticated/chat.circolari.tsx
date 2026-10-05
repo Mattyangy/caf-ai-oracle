@@ -32,7 +32,7 @@ type Hit = {
 
 type Result = { question: string; answer: string; hits: Hit[]; done: boolean };
 
-export const Route = createFileRoute("/_authenticated/circolari")({
+export const Route = createFileRoute("/_authenticated/chat/circolari")({
   head: () => ({
     meta: [
       { title: "Ricerca circolari — CAF AI" },
@@ -115,15 +115,23 @@ function CircolariPage() {
     }
   }
 
-  async function open(hit: Hit, print: boolean) {
+  async function open(hit: Hit, print: boolean, n: number) {
     try {
-      const { url } = await openDoc({ data: { document_id: hit.document_id, page: hit.page_number ?? null } });
-      const win = window.open(url, "_blank");
-      if (print && win) {
-        setTimeout(() => {
-          try { win.print(); } catch { /* cross-origin: operator uses Ctrl+P */ }
-        }, 1500);
+      if (hit.doc_type === "pdf") {
+        // In-app viewer: right page, referenced lines highlighted and numbered.
+        const qs = new URLSearchParams({
+          doc: hit.document_id,
+          page: String(hit.page_number ?? 1),
+          ls: String(hit.line_start ?? 0),
+          le: String(hit.line_end ?? 0),
+          n: String(n),
+        });
+        const win = window.open(`/pdf?${qs}`, "_blank");
+        if (print && win) setTimeout(() => { try { win.print(); } catch { /* noop */ } }, 3000);
+        return;
       }
+      const { url } = await openDoc({ data: { document_id: hit.document_id, page: hit.page_number ?? null } });
+      window.open(url, "_blank");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Documento non disponibile");
     }
@@ -199,10 +207,10 @@ function CircolariPage() {
                           </div>
                         </div>
                         <div className="flex gap-1.5 shrink-0">
-                          <button onClick={() => open(hit, false)} className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface">
+                          <button onClick={() => open(hit, false, i + 1)} className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface">
                             <ExternalLink className="h-3.5 w-3.5" /> Apri
                           </button>
-                          <button onClick={() => open(hit, true)} className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface">
+                          <button onClick={() => open(hit, true, i + 1)} className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface">
                             <Printer className="h-3.5 w-3.5" /> Stampa
                           </button>
                         </div>
