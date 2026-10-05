@@ -27,7 +27,8 @@ export const Route = createFileRoute("/api/circolari-search")({
 
         const hits = await searchCircolari(question, 8);
 
-        const payload = hits.map((h) => ({
+        const allHits = hits.map((h, i) => ({
+          n: i + 1,
           document_id: h.document_id,
           title: h.document_title,
           filename: h.filename,
@@ -52,6 +53,9 @@ ${body.attachment.transcript.slice(0, 300_000)}`
         } catch (err) {
           return new Response(err instanceof Error ? err.message : "Errore AI", { status: 502 });
         }
+        // Keep only the extracts the answer actually cites ([1], [2]…).
+        const cited = new Set([...text.matchAll(/\[(\d{1,2})\]/g)].map((m) => Number(m[1])));
+        const payload = allHits.filter((h) => cited.has(h.n));
         return textResponse(text, {
           "X-Caf-Hits": encodeURIComponent(JSON.stringify(payload)),
           "Access-Control-Expose-Headers": "X-Caf-Hits",

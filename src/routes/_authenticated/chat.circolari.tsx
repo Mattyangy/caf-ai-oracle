@@ -20,6 +20,7 @@ import {
 } from "@/components/HomeComposer";
 
 type Hit = {
+  n: number;
   document_id: string;
   title: string;
   filename: string;
@@ -207,10 +208,10 @@ function CircolariPage() {
                           </div>
                         </div>
                         <div className="flex gap-1.5 shrink-0">
-                          <button onClick={() => open(hit, false, i + 1)} className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface">
+                          <button onClick={() => open(hit, false, hit.n)} className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface">
                             <ExternalLink className="h-3.5 w-3.5" /> Apri
                           </button>
-                          <button onClick={() => open(hit, true, i + 1)} className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface">
+                          <button onClick={() => open(hit, true, hit.n)} className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border hover:bg-surface">
                             <Printer className="h-3.5 w-3.5" /> Stampa
                           </button>
                         </div>
