@@ -9,28 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedAnalizzaRouteImport } from './routes/_authenticated/analizza'
-import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
-import { Route as AuthenticatedCircolariRouteImport } from './routes/_authenticated/circolari'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as ApiAnalizzaRouteImport } from './routes/api/analizza'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiCircolariSearchRouteImport } from './routes/api/circolari-search'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiAnalizzaRouteImport } from './routes/api/analizza'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
+import { Route as AuthenticatedChatCircolariRouteImport } from './routes/_authenticated/chat.circolari'
+import { Route as AuthenticatedChatAnalizzaRouteImport } from './routes/_authenticated/chat.analizza'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -38,44 +34,13 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAnalizzaRoute = AuthenticatedAnalizzaRouteImport.update({
-  id: '/analizza',
-  path: '/analizza',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedCircolariRoute = AuthenticatedCircolariRouteImport.update({
-  id: '/circolari',
-  path: '/circolari',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const ApiAnalizzaRoute = ApiAnalizzaRouteImport.update({
-  id: '/api/analizza',
-  path: '/api/analizza',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCircolariSearchRoute = ApiCircolariSearchRouteImport.update({
@@ -83,11 +48,48 @@ const ApiCircolariSearchRoute = ApiCircolariSearchRouteImport.update({
   path: '/api/circolari-search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAnalizzaRoute = ApiAnalizzaRouteImport.update({
+  id: '/api/analizza',
+  path: '/api/analizza',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedChatRoute,
 } as any)
+const AuthenticatedChatCircolariRoute =
+  AuthenticatedChatCircolariRouteImport.update({
+    id: '/circolari',
+    path: '/circolari',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
+const AuthenticatedChatAnalizzaRoute =
+  AuthenticatedChatAnalizzaRouteImport.update({
+    id: '/analizza',
+    path: '/analizza',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
 const AuthenticatedChatThreadIdRoute =
   AuthenticatedChatThreadIdRouteImport.update({
     id: '/$threadId',
@@ -100,14 +102,14 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/analizza': typeof AuthenticatedAnalizzaRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
-  '/circolari': typeof AuthenticatedCircolariRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
   '/api/circolari-search': typeof ApiCircolariSearchRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/chat/analizza': typeof AuthenticatedChatAnalizzaRoute
+  '/chat/circolari': typeof AuthenticatedChatCircolariRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRoutesByTo {
@@ -115,13 +117,13 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/analizza': typeof AuthenticatedAnalizzaRoute
-  '/circolari': typeof AuthenticatedCircolariRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
   '/api/circolari-search': typeof ApiCircolariSearchRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/chat/analizza': typeof AuthenticatedChatAnalizzaRoute
+  '/chat/circolari': typeof AuthenticatedChatCircolariRoute
   '/chat': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRoutesById {
@@ -131,14 +133,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/_authenticated/analizza': typeof AuthenticatedAnalizzaRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
-  '/_authenticated/circolari': typeof AuthenticatedCircolariRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
   '/api/circolari-search': typeof ApiCircolariSearchRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/_authenticated/chat/analizza': typeof AuthenticatedChatAnalizzaRoute
+  '/_authenticated/chat/circolari': typeof AuthenticatedChatCircolariRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRouteTypes {
@@ -148,14 +150,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/admin'
-    | '/analizza'
     | '/chat'
-    | '/circolari'
     | '/settings'
     | '/api/analizza'
     | '/api/chat'
     | '/api/circolari-search'
     | '/chat/$threadId'
+    | '/chat/analizza'
+    | '/chat/circolari'
     | '/chat/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -163,13 +165,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/admin'
-    | '/analizza'
-    | '/circolari'
     | '/settings'
     | '/api/analizza'
     | '/api/chat'
     | '/api/circolari-search'
     | '/chat/$threadId'
+    | '/chat/analizza'
+    | '/chat/circolari'
     | '/chat'
   id:
     | '__root__'
@@ -178,14 +180,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/admin'
-    | '/_authenticated/analizza'
     | '/_authenticated/chat'
-    | '/_authenticated/circolari'
     | '/_authenticated/settings'
     | '/api/analizza'
     | '/api/chat'
     | '/api/circolari-search'
     | '/_authenticated/chat/$threadId'
+    | '/_authenticated/chat/analizza'
+    | '/_authenticated/chat/circolari'
     | '/_authenticated/chat/'
   fileRoutesById: FileRoutesById
 }
@@ -201,18 +203,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -222,60 +217,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/analizza': {
-      id: '/_authenticated/analizza'
-      path: '/analizza'
-      fullPath: '/analizza'
-      preLoaderRoute: typeof AuthenticatedAnalizzaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/chat': {
-      id: '/_authenticated/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof AuthenticatedChatRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/circolari': {
-      id: '/_authenticated/circolari'
-      path: '/circolari'
-      fullPath: '/circolari'
-      preLoaderRoute: typeof AuthenticatedCircolariRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/analizza': {
-      id: '/api/analizza'
-      path: '/api/analizza'
-      fullPath: '/api/analizza'
-      preLoaderRoute: typeof ApiAnalizzaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/circolari-search': {
@@ -285,11 +238,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCircolariSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/analizza': {
+      id: '/api/analizza'
+      path: '/api/analizza'
+      fullPath: '/api/analizza'
+      preLoaderRoute: typeof ApiAnalizzaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chat': {
+      id: '/_authenticated/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AuthenticatedChatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chat/': {
       id: '/_authenticated/chat/'
       path: '/'
       fullPath: '/chat/'
       preLoaderRoute: typeof AuthenticatedChatIndexRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
+    '/_authenticated/chat/circolari': {
+      id: '/_authenticated/chat/circolari'
+      path: '/circolari'
+      fullPath: '/chat/circolari'
+      preLoaderRoute: typeof AuthenticatedChatCircolariRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
+    '/_authenticated/chat/analizza': {
+      id: '/_authenticated/chat/analizza'
+      path: '/analizza'
+      fullPath: '/chat/analizza'
+      preLoaderRoute: typeof AuthenticatedChatAnalizzaRouteImport
       parentRoute: typeof AuthenticatedChatRoute
     }
     '/_authenticated/chat/$threadId': {
@@ -304,11 +306,15 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedChatRouteChildren {
   AuthenticatedChatThreadIdRoute: typeof AuthenticatedChatThreadIdRoute
+  AuthenticatedChatAnalizzaRoute: typeof AuthenticatedChatAnalizzaRoute
+  AuthenticatedChatCircolariRoute: typeof AuthenticatedChatCircolariRoute
   AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
 }
 
 const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
   AuthenticatedChatThreadIdRoute: AuthenticatedChatThreadIdRoute,
+  AuthenticatedChatAnalizzaRoute: AuthenticatedChatAnalizzaRoute,
+  AuthenticatedChatCircolariRoute: AuthenticatedChatCircolariRoute,
   AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
 }
 
@@ -317,17 +323,13 @@ const AuthenticatedChatRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-  AuthenticatedAnalizzaRoute: typeof AuthenticatedAnalizzaRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
-  AuthenticatedCircolariRoute: typeof AuthenticatedCircolariRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-  AuthenticatedAnalizzaRoute: AuthenticatedAnalizzaRoute,
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
-  AuthenticatedCircolariRoute: AuthenticatedCircolariRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }
 
