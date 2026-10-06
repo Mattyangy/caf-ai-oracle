@@ -10,7 +10,7 @@
  * coupling with a specific vendor. Swap providers in src/lib/ai/index.server.ts.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import type { ModelMessage } from "ai";
+import { streamText, type ModelMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import {
@@ -19,14 +19,12 @@ import {
   estimateReliability,
   searchArchive,
 } from "@/lib/rag.server";
-import { bestOfAnswer, textResponse } from "@/lib/ai/best-of.server";
+import { getAiProvider } from "@/lib/ai/index.server";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 type ChatBody = {
   threadId?: string;
   messages?: ChatMessage[];
-  /** "chatgpt" | "gemini" — see src/lib/ai/models.ts */
-  engine?: string;
   /** Documents attached by the operator, extracted in the browser. Never stored. */
   attachment?: { names?: string[]; transcript?: string } | null;
 };
@@ -96,45 +94,52 @@ ${attachedText}
 Se la domanda riguarda i documenti allegati, rispondi basandoti su di essi e cita sempre pagina e riga (es. "pagina 2, righe 14-17").`
           : buildSystemPrompt(hits);
 
-        // 2) Ask ChatGPT and Gemini, keep the best answer
+        // 2) Stream the answer from the configured AI provider (default: ChatGPT)
         const modelMessages: ModelMessage[] = messages.map((m) => ({
           role: m.role,
           content: m.content,
         }));
-        let text: string;
-        try {
-          text = await bestOfAnswer(systemPrompt, modelMessages);
-        } catch (err) {
-          return new Response(err instanceof Error ? err.message : "Errore AI", { status: 502 });
-        }
+        const provider = getAiProvider();
 
-        try {
-          const admin = createClient<Database>(url, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-            auth: { persistSession: false, autoRefreshToken: false },
-          });
-          await admin.from("chat_messages").insert({
-            thread_id: threadId,
-            role: "assistant",
-            content: text,
-            sources: sources as unknown as Database["public"]["Tables"]["chat_messages"]["Insert"]["sources"],
-            reliability: reliability.label,
-            reliability_score: reliability.score,
-          });
-          await admin
-            .from("chat_threads")
-            .update({ updated_at: new Date().toISOString() })
-            .eq("id", threadId);
-        } catch (err) {
-          console.error("Persist assistant message failed", err);
-        }
+        const result = streamText({
+          model: provider.chatModel(),
+          system: systemPrompt,
+          messages: modelMessages,
+          ...(provider.chatProviderOptions
+            ? { providerOptions: provider.chatProviderOptions }
+            : {}),
+          onFinish: async ({ text }) => {
+            try {
+              const admin = createClient<Database>(url, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+                auth: { persistSession: false, autoRefreshToken: false },
+              });
+              await admin.from("chat_messages").insert({
+                thread_id: threadId,
+                role: "assistant",
+                content: text,
+                sources:
+                  sources as unknown as Database["public"]["Tables"]["chat_messages"]["Insert"]["sources"],
+                reliability: reliability.label,
+                reliability_score: reliability.score,
+              });
+              await admin
+                .from("chat_threads")
+                .update({ updated_at: new Date().toISOString() })
+                .eq("id", threadId);
+            } catch (err) {
+              console.error("Persist assistant message failed", err);
+            }
+          },
+        });
 
-        return textResponse(text, {
-          "X-Caf-Sources": encodeURIComponent(JSON.stringify(sources)),
-          "X-Caf-Reliability": encodeURIComponent(JSON.stringify(reliability)),
-          "Access-Control-Expose-Headers": "X-Caf-Sources, X-Caf-Reliability",
+        return result.toTextStreamResponse({
+          headers: {
+            "X-Caf-Sources": encodeURIComponent(JSON.stringify(sources)),
+            "X-Caf-Reliability": encodeURIComponent(JSON.stringify(reliability)),
+            "Access-Control-Expose-Headers": "X-Caf-Sources, X-Caf-Reliability",
+          },
         });
       },
     },
   },
 });
-

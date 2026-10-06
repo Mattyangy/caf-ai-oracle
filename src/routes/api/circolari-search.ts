@@ -4,11 +4,13 @@
  * always-cited answer. The matching extracts (document, page, line range)
  * travel in the X-Caf-Hits response header so the UI can render
  * "Apri PDF alla pagina" / "Stampa" buttons immediately.
+ * The client keeps only the extracts the answer actually cites ([1], [2]…).
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { streamText } from "ai";
 import { requireApprovedUser } from "@/lib/api-auth.server";
 import { buildCircolariPrompt, searchCircolari } from "@/lib/rag.server";
-import { bestOfAnswer, textResponse } from "@/lib/ai/best-of.server";
+import { getAiProvider } from "@/lib/ai/index.server";
 
 export const Route = createFileRoute("/api/circolari-search")({
   server: {
@@ -19,7 +21,6 @@ export const Route = createFileRoute("/api/circolari-search")({
 
         const body = (await request.json()) as {
           question?: string;
-          engine?: string;
           attachment?: { names?: string[]; transcript?: string } | null;
         };
         const question = (body.question ?? "").trim();
@@ -47,18 +48,20 @@ Testo numerato [p<pagina> r<riga>]. Usalo per confrontarlo con le circolari e ci
 ${body.attachment.transcript.slice(0, 300_000)}`
           : buildCircolariPrompt(hits);
 
-        let text: string;
-        try {
-          text = await bestOfAnswer(system, [{ role: "user", content: question }]);
-        } catch (err) {
-          return new Response(err instanceof Error ? err.message : "Errore AI", { status: 502 });
-        }
-        // Keep only the extracts the answer actually cites ([1], [2]…).
-        const cited = new Set([...text.matchAll(/\[(\d{1,2})\]/g)].map((m) => Number(m[1])));
-        const payload = allHits.filter((h) => cited.has(h.n));
-        return textResponse(text, {
-          "X-Caf-Hits": encodeURIComponent(JSON.stringify(payload)),
-          "Access-Control-Expose-Headers": "X-Caf-Hits",
+        const provider = getAiProvider();
+        const result = streamText({
+          model: provider.chatModel(),
+          system,
+          messages: [{ role: "user", content: question }],
+          ...(provider.chatProviderOptions
+            ? { providerOptions: provider.chatProviderOptions }
+            : {}),
+        });
+        return result.toTextStreamResponse({
+          headers: {
+            "X-Caf-Hits": encodeURIComponent(JSON.stringify(allHits)),
+            "Access-Control-Expose-Headers": "X-Caf-Hits",
+          },
         });
       },
     },
