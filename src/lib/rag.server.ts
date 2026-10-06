@@ -104,7 +104,12 @@ export async function searchCircolari(question: string, limit = 8): Promise<Sear
 export function buildCircolariPrompt(hits: SearchHit[]): string {
   if (hits.length === 0) {
     return `Sei CAF AI. L'operatore ha cercato nell'archivio delle CIRCOLARI ma nessuna circolare pertinente è stata trovata.
-Rispondi in italiano con una sola frase: spiega che non risultano circolari caricate pertinenti e suggerisci come riformulare la ricerca. Non inventare riferimenti.`;
+
+Istruzioni obbligatorie:
+1. Apri la risposta con una riga del tipo: "Fonte: ChatGPT (conoscenza generale) — nessuna circolare interna trovata."
+2. Rispondi comunque alla domanda usando le tue conoscenze generali in materia fiscale, previdenziale e assistenziale, in italiano, in modo sintetico e operativo.
+3. Chiudi invitando l'operatore a verificare la risposta presso le fonti ufficiali (Agenzia delle Entrate, INPS, normativa vigente) e suggerisci di caricare la circolare pertinente nell'Archivio AI.
+4. Non inventare riferimenti a circolari interne: non ne è stata trovata nessuna.`;
   }
 
   const context = hits
