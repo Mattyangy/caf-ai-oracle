@@ -98,7 +98,7 @@ function CircolariPage() {
       });
       if (!res.ok || !res.body) throw new Error((await res.text()) || `Errore ${res.status}`);
       const raw = res.headers.get("X-Caf-Hits");
-      if (raw) patchLast({ hits: JSON.parse(decodeURIComponent(raw)) as Hit[] });
+      const allHits = raw ? (JSON.parse(decodeURIComponent(raw)) as Hit[]) : [];
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let text = "";
@@ -108,6 +108,9 @@ function CircolariPage() {
         text += decoder.decode(value, { stream: true });
         patchLast({ answer: text });
       }
+      // Show only the extracts the answer actually cites ([1], [2]…).
+      const cited = new Set([...text.matchAll(/\[(\d{1,2})\]/g)].map((m) => Number(m[1])));
+      patchLast({ hits: allHits.filter((h) => cited.has(h.n)) });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Errore nella ricerca");
     } finally {
