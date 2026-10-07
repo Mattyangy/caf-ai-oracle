@@ -60,19 +60,41 @@ async function search(
     if (error) console.error("search_chunks failed", error);
     return [];
   }
-  return data.map((r) => ({
-    chunk_id: r.id,
-    document_id: r.document_id,
-    document_title: r.title,
-    document_type: r.doc_type,
-    categoria: r.categoria,
-    filename: r.filename,
-    page_number: r.page_number,
-    line_start: r.line_start,
-    line_end: r.line_end,
-    content: r.content,
-    rank: r.rank,
-  }));
+  const terms = keyTerms(question);
+  return data
+    .filter((r) => isRelevant(r.content + " " + r.title, terms))
+    .map((r) => ({
+      chunk_id: r.id,
+      document_id: r.document_id,
+      document_title: r.title,
+      document_type: r.doc_type,
+      categoria: r.categoria,
+      filename: r.filename,
+      page_number: r.page_number,
+      line_start: r.line_start,
+      line_end: r.line_end,
+      content: r.content,
+      rank: r.rank,
+    }));
+}
+
+const STOP = new Set(
+  "come cosa quale quali quando dove perché perche sono essere della delle dello degli nella nelle nel per con che chi una uno questo questa quello quella deve devo posso puoi può puo fare anche alla alle agli dal dalla dai tra fra più piu molto sulla sulle sul non hanno ha ho cosè qual".split(" "),
+);
+
+/** Meaningful words of the question (≥4 letters, no stopwords), stemmed to 5 chars. */
+function keyTerms(q: string): string[] {
+  const words = q.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/);
+  return [...new Set(words.filter((w) => w.length >= 4 && !STOP.has(w)).map((w) => w.slice(0, 5)))];
+}
+
+/** An extract is relevant only if it contains most of the key words (min 2 when possible). */
+function isRelevant(text: string, terms: string[]): boolean {
+  if (terms.length === 0) return false;
+  const t = text.toLowerCase();
+  const found = terms.filter((w) => t.includes(w)).length;
+  const needed = terms.length === 1 ? 1 : Math.max(2, Math.ceil(terms.length * 0.6));
+  return found >= needed;
 }
 
 /**
