@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { attachKey, useAiEngine } from "@/components/HomeComposer";
 import { AI_ENGINES, type AiEngineId } from "@/lib/ai/models";
+import { filterUsed, parseUsedSources } from "@/lib/used-sources";
 
 type Source = {
   document_id: string;
@@ -24,6 +25,9 @@ type Source = {
   doc_type: string;
   categoria?: string;
   page_number: number | null;
+  line_start?: number | null;
+  line_end?: number | null;
+  refs?: number[];
 };
 
 type Reliability = { label: string; score: number };
@@ -167,17 +171,29 @@ function ThreadPage() {
           const { done, value } = await reader.read();
           if (done) break;
           acc += decoder.decode(value, { stream: true });
+          const visible = parseUsedSources(acc).clean;
           setMessages((m) =>
             m.map((msg) =>
-              msg.id === placeholderId ? { ...msg, content: acc } : msg,
+              msg.id === placeholderId ? { ...msg, content: visible } : msg,
             ),
           );
         }
 
+        // Show only the PDFs the answer actually used.
+        const { clean, used } = parseUsedSources(acc);
+        const usedSources = filterUsed(sources, used);
+        const usedReliability =
+          usedSources.length === 0 ? { label: "Bassa", score: 25 } : reliability;
         setMessages((m) =>
           m.map((msg) =>
             msg.id === placeholderId
-              ? { ...msg, streaming: false, sources, reliability }
+              ? {
+                  ...msg,
+                  content: clean,
+                  streaming: false,
+                  sources: usedSources,
+                  reliability: usedReliability,
+                }
               : msg,
           ),
         );
