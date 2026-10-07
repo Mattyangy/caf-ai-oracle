@@ -79,7 +79,9 @@ async function search(
 }
 
 const STOP = new Set(
-  "come cosa quale quali quando dove perché perche sono essere della delle dello degli nella nelle nel per con che chi una uno questo questa quello quella deve devo posso puoi può puo fare anche alla alle agli dal dalla dai tra fra più piu molto sulla sulle sul non hanno ha ho cosè qual".split(" "),
+  ("come cosa quale quali quando dove perché perche sono essere della delle dello degli nella nelle nel per con che chi una uno questo questa quello quella deve devo posso puoi può puo fare anche alla alle agli dal dalla dai tra fra più piu molto sulla sulle sul non hanno ha ho cosè qual " +
+    // generic words that appear everywhere in fiscal guides and match anything
+    "funziona funzionano serve servono servire documenti documento documentazione domanda domande quest anno anni calcola calcolare calcolo spetta spettano ottenere avere richiedere richiesta presentare procedura cosa informazioni sapere vorrei bisogna occorre necessario oggi").split(/\s+/),
 );
 
 /** Meaningful words of the question (≥4 letters, no stopwords), stemmed to 5 chars. */
@@ -185,28 +187,23 @@ Rispondi in italiano, in modo chiaro, completo e professionale. Struttura la ris
     })
     .join("\n\n---\n\n");
 
-  const hasCircolari = hits.some((h) => h.categoria === "circolari");
-
   return `Sei CAF AI, un assistente operativo per operatori di CAF e Patronato in Italia. Data odierna: ${now}.
 
-Ho consultato l'archivio interno (dando priorità alle circolari caricate) e ho trovato i seguenti estratti pertinenti:
+Ho consultato l'archivio interno (circolari, FAQ, guide…) e ho trovato questi estratti, che POTREBBERO NON essere pertinenti:
 
 ===== ARCHIVIO INTERNO =====
 ${context}
 ============================
 
 Istruzioni:
-1. Usa PRIORITARIAMENTE le informazioni delle CIRCOLARI, poi gli altri documenti dell'archivio.
-2. ${
-    hasCircolari
-      ? 'Apri la risposta con una riga del tipo: "Fonte: circolare interna — <titolo della circolare>, pagina <n>." e specifica sempre, nel testo, quando un\'informazione proviene da una circolare.'
-      : "Nell'archivio NON sono presenti circolari pertinenti: dillo esplicitamente all'inizio della risposta."
-  }
-3. Se le informazioni sono parziali, puoi integrarle con le tue conoscenze generali, ma segnala chiaramente cosa proviene dall'archivio e cosa è integrazione.
-4. Se le fonti non rispondono alla domanda, dillo esplicitamente e rispondi con conoscenza generale invitando a verificare presso fonti ufficiali.
-5. Non citare i numeri [Fonte N] nel corpo della risposta: le fonti verranno mostrate a parte.
+1. Valuta con rigore se ogni estratto risponde DAVVERO alla domanda (stesso argomento, stessa prestazione/agevolazione). Un estratto che condivide solo qualche parola NON è pertinente: ignoralo.
+2. Se almeno un estratto è pertinente, apri la risposta con una riga: "Fonte: <titolo del documento>, pagina <n>." (se è una circolare scrivi "Fonte: circolare interna — <titolo>, pagina <n>.") e basa la risposta su quegli estratti, priorità alle CIRCOLARI.
+3. Se NESSUN estratto è pertinente, apri la risposta con: "Fonte: ChatGPT (conoscenza generale) — nessun documento interno pertinente." e rispondi con le tue conoscenze generali, invitando a verificare presso le fonti ufficiali.
+4. Se integri le fonti con conoscenze generali, segnala cosa proviene dall'archivio e cosa è integrazione.
+5. Non citare i numeri [Fonte N] nel corpo della risposta.
 6. Rispondi in italiano, in modo chiaro e professionale, con paragrafi e — dove utile — elenchi puntati.
-7. Alla fine, aggiungi una riga con "RIEPILOGO:" e una sintesi in 1-2 frasi.`;
+7. Aggiungi una riga con "RIEPILOGO:" e una sintesi in 1-2 frasi.
+8. ULTIMA riga obbligatoria, da sola: "FONTI USATE: " seguito dai numeri delle fonti effettivamente usate (es. "FONTI USATE: 1, 3"), oppure "FONTI USATE: nessuna".`;
 }
 
 /**
@@ -224,8 +221,9 @@ export function estimateReliability(hits: SearchHit[]): { label: string; score: 
 }
 
 export function buildSourcesPayload(hits: SearchHit[]) {
-  // Dedupe by document + page
-  const seen = new Set<string>();
+  // Dedupe by document + page; `refs` keeps every [Fonte N] number merged here
+  // so the client can show only the sources the model declared as used.
+  const byKey = new Map<string, number>();
   const sources: Array<{
     document_id: string;
     title: string;
@@ -235,11 +233,16 @@ export function buildSourcesPayload(hits: SearchHit[]) {
     page_number: number | null;
     line_start: number | null;
     line_end: number | null;
+    refs: number[];
   }> = [];
-  for (const h of hits) {
+  hits.forEach((h, i) => {
     const key = `${h.document_id}:${h.page_number ?? "-"}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const existing = byKey.get(key);
+    if (existing !== undefined) {
+      sources[existing].refs.push(i + 1);
+      return;
+    }
+    byKey.set(key, sources.length);
     sources.push({
       document_id: h.document_id,
       title: h.document_title,
@@ -249,7 +252,8 @@ export function buildSourcesPayload(hits: SearchHit[]) {
       page_number: h.page_number,
       line_start: h.line_start,
       line_end: h.line_end,
+      refs: [i + 1],
     });
-  }
+  });
   return sources;
 }

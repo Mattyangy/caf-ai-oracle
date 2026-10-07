@@ -20,6 +20,7 @@ import {
   searchArchive,
 } from "@/lib/rag.server";
 import { getAiProvider } from "@/lib/ai/index.server";
+import { filterUsed, parseUsedSources } from "@/lib/used-sources";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 type ChatBody = {
@@ -110,17 +111,24 @@ Se la domanda riguarda i documenti allegati, rispondi basandoti su di essi e cit
             : {}),
           onFinish: async ({ text }) => {
             try {
+              // Keep only the sources the model declared as actually used.
+              const { clean, used } = parseUsedSources(text);
+              const usedSources = filterUsed(sources, used);
+              const usedReliability =
+                used === null
+                  ? reliability
+                  : estimateReliability(hits.filter((_, i) => used.includes(i + 1)));
               const admin = createClient<Database>(url, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
                 auth: { persistSession: false, autoRefreshToken: false },
               });
               await admin.from("chat_messages").insert({
                 thread_id: threadId,
                 role: "assistant",
-                content: text,
+                content: clean,
                 sources:
-                  sources as unknown as Database["public"]["Tables"]["chat_messages"]["Insert"]["sources"],
-                reliability: reliability.label,
-                reliability_score: reliability.score,
+                  usedSources as unknown as Database["public"]["Tables"]["chat_messages"]["Insert"]["sources"],
+                reliability: usedReliability.label,
+                reliability_score: usedReliability.score,
               });
               await admin
                 .from("chat_threads")

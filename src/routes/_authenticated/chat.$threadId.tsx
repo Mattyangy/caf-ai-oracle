@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { attachKey, useAiEngine } from "@/components/HomeComposer";
 import { AI_ENGINES, type AiEngineId } from "@/lib/ai/models";
+import { filterUsed, parseUsedSources } from "@/lib/used-sources";
 
 type Source = {
   document_id: string;
@@ -24,6 +25,9 @@ type Source = {
   doc_type: string;
   categoria?: string;
   page_number: number | null;
+  line_start?: number | null;
+  line_end?: number | null;
+  refs?: number[];
 };
 
 type Reliability = { label: string; score: number };
@@ -167,17 +171,29 @@ function ThreadPage() {
           const { done, value } = await reader.read();
           if (done) break;
           acc += decoder.decode(value, { stream: true });
+          const visible = parseUsedSources(acc).clean;
           setMessages((m) =>
             m.map((msg) =>
-              msg.id === placeholderId ? { ...msg, content: acc } : msg,
+              msg.id === placeholderId ? { ...msg, content: visible } : msg,
             ),
           );
         }
 
+        // Show only the PDFs the answer actually used.
+        const { clean, used } = parseUsedSources(acc);
+        const usedSources = filterUsed(sources, used);
+        const usedReliability =
+          usedSources.length === 0 ? { label: "Bassa", score: 25 } : reliability;
         setMessages((m) =>
           m.map((msg) =>
             msg.id === placeholderId
-              ? { ...msg, streaming: false, sources, reliability }
+              ? {
+                  ...msg,
+                  content: clean,
+                  streaming: false,
+                  sources: usedSources,
+                  reliability: usedReliability,
+                }
               : msg,
           ),
         );
@@ -205,7 +221,16 @@ function ThreadPage() {
     }
   }, [initial, search.auto, sendMessage]);
 
-  async function handleOpenDoc(document_id: string, page: number | null) {
+  async function handleOpenDoc(s: Source) {
+    const { document_id, page_number: page } = s;
+    // PDFs open in the in-app viewer, directly at the page (and highlighted lines).
+    if (s.doc_type === "pdf") {
+      const q = new URLSearchParams({ doc: document_id, page: String(page ?? 1) });
+      if (s.line_start) q.set("ls", String(s.line_start));
+      if (s.line_end) q.set("le", String(s.line_end));
+      window.open(`/pdf?${q.toString()}`, "_blank", "noopener");
+      return;
+    }
     try {
       const { url } = await openDoc({ data: { document_id, page } });
       window.open(url, "_blank", "noopener");
@@ -294,7 +319,7 @@ function MessageBubble({
   onOpenDoc,
 }: {
   msg: Message;
-  onOpenDoc: (id: string, page: number | null) => void;
+  onOpenDoc: (s: Source) => void;
 }) {
   if (msg.role === "user") {
     return (
@@ -364,7 +389,7 @@ function MessageBubble({
                     </div>
                   </div>
                   <button
-                    onClick={() => onOpenDoc(s.document_id, s.page_number)}
+                    onClick={() => onOpenDoc(s)}
                     className="shrink-0 inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-primary/15 text-primary border border-primary/30 hover:bg-primary/25 transition"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
