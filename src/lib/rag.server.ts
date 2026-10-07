@@ -79,7 +79,9 @@ async function search(
 }
 
 const STOP = new Set(
-  "come cosa quale quali quando dove perché perche sono essere della delle dello degli nella nelle nel per con che chi una uno questo questa quello quella deve devo posso puoi può puo fare anche alla alle agli dal dalla dai tra fra più piu molto sulla sulle sul non hanno ha ho cosè qual".split(" "),
+  ("come cosa quale quali quando dove perché perche sono essere della delle dello degli nella nelle nel per con che chi una uno questo questa quello quella deve devo posso puoi può puo fare anche alla alle agli dal dalla dai tra fra più piu molto sulla sulle sul non hanno ha ho cosè qual " +
+    // generic words that appear everywhere in fiscal guides and match anything
+    "funziona funzionano serve servono servire documenti documento documentazione domanda domande quest anno anni calcola calcolare calcolo spetta spettano ottenere avere richiedere richiesta presentare procedura cosa informazioni sapere vorrei bisogna occorre necessario oggi").split(/\s+/),
 );
 
 /** Meaningful words of the question (≥4 letters, no stopwords), stemmed to 5 chars. */
