@@ -1,3 +1,5 @@
+// Run with: bun test ./src/lib/used-sources.test.ts
+// @ts-ignore -- bun's test runner types are not part of the app's tsconfig
 import { describe, expect, test } from "bun:test";
 import { filterUsed, parseUsedSources } from "./used-sources";
 
