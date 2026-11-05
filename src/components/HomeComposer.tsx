@@ -87,8 +87,8 @@ export function HomeComposer({
     const added: AttachedDoc[] = [];
     try {
       for (const file of Array.from(files)) {
-        if (!/\.(pdf|md|txt)$/i.test(file.name)) {
-          toast.error(`${file.name}: formati supportati PDF, MD, TXT`);
+        if (!/\.(pdf|md|txt|docx)$/i.test(file.name)) {
+          toast.error(`${file.name}: formati supportati PDF, Word (.docx), TXT, MD`);
           continue;
         }
         setProgress(`Lettura di ${file.name}…`);
@@ -135,6 +135,11 @@ export function HomeComposer({
         onSubmit={(e) => {
           e.preventDefault();
           send();
+        }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          handleFiles(e.dataTransfer.files);
         }}
         className="bg-surface border border-border rounded-2xl focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30 transition"
       >
@@ -184,7 +189,7 @@ export function HomeComposer({
               type="file"
               multiple
               hidden
-              accept=".pdf,.md,.txt,application/pdf,text/markdown,text/plain"
+              accept=".pdf,.md,.txt,.docx,application/pdf,text/markdown,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               onChange={(e) => {
                 handleFiles(e.target.files);
                 e.target.value = "";

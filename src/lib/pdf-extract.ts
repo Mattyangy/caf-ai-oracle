@@ -152,6 +152,12 @@ export async function extractFile(
 ): Promise<ExtractionResult & { docType: "pdf" | "markdown" }> {
   const isPdf = file.name.toLowerCase().endsWith(".pdf");
   if (isPdf) return { ...(await extractPdf(file, onPage)), docType: "pdf" };
+  if (file.name.toLowerCase().endsWith(".docx")) {
+    const mammoth = await import("mammoth");
+    const { value } = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+    const txt = new File([value], file.name.replace(/\.docx$/i, ".txt"), { type: "text/plain" });
+    return { ...(await extractMarkdown(txt)), docType: "markdown" };
+  }
   return { ...(await extractMarkdown(file)), docType: "markdown" };
 }
 
