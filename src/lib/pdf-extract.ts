@@ -145,6 +145,45 @@ export async function extractPdf(
   return { chunks, pageCount: pdf.numPages, pages };
 }
 
+/** Render PDF pages (max 20) to JPEG data URLs for OCR. */
+export async function pdfToImages(file: File): Promise<string[]> {
+  const pdfjs = await import("pdfjs-dist");
+  const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+  pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+  const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  const out: string[] = [];
+  for (let n = 1; n <= Math.min(pdf.numPages, 20); n++) {
+    const page = await pdf.getPage(n);
+    const viewport = page.getViewport({ scale: 1.6 });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvas, canvasContext: canvas.getContext("2d")!, viewport } as never)
+      .promise;
+    out.push(canvas.toDataURL("image/jpeg", 0.8));
+  }
+  return out;
+}
+
+/** Read an image file as a (downscaled) JPEG data URL. */
+export async function imageToDataUrl(file: File): Promise<string> {
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, 2000 / Math.max(bmp.width, bmp.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bmp.width * scale);
+  canvas.height = Math.round(bmp.height * scale);
+  canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.85);
+}
+
+/** Build pages from OCR text (one string per page). */
+export function ocrToPages(texts: string[]): ExtractedPage[] {
+  return texts.map((t, i) => ({
+    page_number: i + 1,
+    lines: t.split("\n").map((l) => l.trim()).filter(Boolean),
+  }));
+}
+
 /** Extract any supported file (PDF or Markdown/text). */
 export async function extractFile(
   file: File,
