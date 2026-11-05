@@ -6,7 +6,7 @@ export function CafAiLogo({ className = "" }: { className?: string }) {
       <img
         src={logoAsset.url}
         alt="CAF AI"
-        className="h-9 w-auto object-contain drop-shadow-[0_0_12px_oklch(0.72_0.18_240/0.35)]"
+        className="h-12 sm:h-14 w-auto object-contain rounded-lg ring-1 ring-primary/30 shadow-lg shadow-primary/20"
       />
     </div>
   );
