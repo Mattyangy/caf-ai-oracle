@@ -20,6 +20,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as ApiAnalizzaRouteImport } from './routes/api/analizza'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiCircolariSearchRouteImport } from './routes/api/circolari-search'
+import { Route as ApiOcrRouteImport } from './routes/api/ocr'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedChatAnalizzaRouteImport } from './routes/_authenticated/chat.analizza'
@@ -79,6 +80,11 @@ const ApiCircolariSearchRoute = ApiCircolariSearchRouteImport.update({
   path: '/api/circolari-search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOcrRoute = ApiOcrRouteImport.update({
+  id: '/api/ocr',
+  path: '/api/ocr',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
   '/api/circolari-search': typeof ApiCircolariSearchRoute
+  '/api/ocr': typeof ApiOcrRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat/analizza': typeof AuthenticatedChatAnalizzaRoute
   '/chat/circolari': typeof AuthenticatedChatCircolariRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
   '/api/circolari-search': typeof ApiCircolariSearchRoute
+  '/api/ocr': typeof ApiOcrRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat/analizza': typeof AuthenticatedChatAnalizzaRoute
   '/chat/circolari': typeof AuthenticatedChatCircolariRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/api/analizza': typeof ApiAnalizzaRoute
   '/api/chat': typeof ApiChatRoute
   '/api/circolari-search': typeof ApiCircolariSearchRoute
+  '/api/ocr': typeof ApiOcrRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/chat/analizza': typeof AuthenticatedChatAnalizzaRoute
   '/_authenticated/chat/circolari': typeof AuthenticatedChatCircolariRoute
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/api/analizza'
     | '/api/chat'
     | '/api/circolari-search'
+    | '/api/ocr'
     | '/chat/$threadId'
     | '/chat/analizza'
     | '/chat/circolari'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/api/analizza'
     | '/api/chat'
     | '/api/circolari-search'
+    | '/api/ocr'
     | '/chat/$threadId'
     | '/chat/analizza'
     | '/chat/circolari'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/api/analizza'
     | '/api/chat'
     | '/api/circolari-search'
+    | '/api/ocr'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/chat/analizza'
     | '/_authenticated/chat/circolari'
@@ -211,6 +223,7 @@ export interface RootRouteChildren {
   ApiAnalizzaRoute: typeof ApiAnalizzaRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiCircolariSearchRoute: typeof ApiCircolariSearchRoute
+  ApiOcrRoute: typeof ApiOcrRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCircolariSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ocr': {
+      id: '/api/ocr'
+      path: '/api/ocr'
+      fullPath: '/api/ocr'
+      preLoaderRoute: typeof ApiOcrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/chat/': {
       id: '/_authenticated/chat/'
       path: '/'
@@ -365,6 +385,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAnalizzaRoute: ApiAnalizzaRoute,
   ApiChatRoute: ApiChatRoute,
   ApiCircolariSearchRoute: ApiCircolariSearchRoute,
+  ApiOcrRoute: ApiOcrRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
