@@ -81,7 +81,7 @@ export const Route = createFileRoute("/api/chat")({
         const question = (lastUser?.content ?? "").trim();
 
         // 1) Retrieve from archive
-        const hits = question ? await searchArchive(question, 6) : [];
+        const hits = question ? await searchArchive(question, 10) : [];
         const sources = buildSourcesPayload(hits);
         const reliability = estimateReliability(hits);
         const attachedText = (body.attachment?.transcript ?? "").slice(0, 400_000);

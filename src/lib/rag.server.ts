@@ -50,6 +50,7 @@ async function search(
   question: string,
   limit: number,
   onlyCategoria?: string,
+  relevanceText: string = question,
 ): Promise<SearchHit[]> {
   const { data, error } = await supabase.rpc("search_chunks", {
     _query: question.replace(/[^\p{L}\p{N}\s]/gu, " "),
@@ -60,7 +61,7 @@ async function search(
     if (error) console.error("search_chunks failed", error);
     return [];
   }
-  const terms = keyTerms(question);
+  const terms = keyTerms(relevanceText);
   return data
     .filter((r) => isRelevant(r.content + " " + r.title, terms))
     .map((r) => ({
@@ -103,17 +104,52 @@ function isRelevant(text: string, terms: string[]): boolean {
  * Search the archive, giving absolute priority to the "circolari" category.
  * Any remaining slots are filled with hits from the rest of the archive.
  */
-export async function searchArchive(question: string, limit = 6): Promise<SearchHit[]> {
+export async function searchArchive(question: string, limit = 10): Promise<SearchHit[]> {
   const supabase = adminClient();
+  const { corrected, keywords } = await understandQuestion(question);
+  const queries = [...new Set([corrected, `${corrected} ${keywords}`, question])];
 
-  const circolari = await search(supabase, question, limit, "circolari");
-  if (circolari.length >= limit) return circolari;
+  const seen = new Set<string>();
+  const out: SearchHit[] = [];
+  const add = (hits: SearchHit[]) => {
+    for (const h of hits) {
+      if (!seen.has(h.chunk_id)) {
+        seen.add(h.chunk_id);
+        out.push(h);
+      }
+    }
+  };
+  // Circolari first, then the rest of the archive.
+  for (const q of queries) add(await search(supabase, q, limit, "circolari", corrected));
+  for (const q of queries) add(await search(supabase, q, limit, undefined, corrected));
+  return out.slice(0, limit);
+}
 
-  const others = await search(supabase, question, limit);
-  const seen = new Set(circolari.map((h) => h.chunk_id));
-  const rest = others.filter((h) => !seen.has(h.chunk_id));
-
-  return [...circolari, ...rest].slice(0, limit);
+/**
+ * Understand a possibly misspelled question: fix typos and add search keywords
+ * (synonyms, acronyms). Only rewrites the query; never answers it.
+ */
+export async function understandQuestion(
+  question: string,
+): Promise<{ corrected: string; keywords: string }> {
+  try {
+    const { generateText } = await import("ai");
+    const { createGeminiProvider } = await import("./ai/lovable.server");
+    const { text } = await generateText({
+      model: createGeminiProvider().chatModel("google/gemini-3.1-flash-lite"),
+      system:
+        "Sei un correttore di domande per operatori CAF/Patronato (fisco, ISEE, INPS, 730, bonus). " +
+        "Correggi errori di battitura e interpreta la domanda. Rispondi SOLO con due righe:\n" +
+        "DOMANDA: <domanda corretta in italiano>\nPAROLE: <5-10 parole chiave e sinonimi utili per cercare nei documenti, separate da spazio>",
+      prompt: question,
+    });
+    const corrected = /DOMANDA:\s*(.+)/i.exec(text)?.[1]?.trim() || question;
+    const keywords = /PAROLE:\s*(.+)/i.exec(text)?.[1]?.trim() || "";
+    return { corrected, keywords };
+  } catch (err) {
+    console.error("understandQuestion failed", err);
+    return { corrected: question, keywords: "" };
+  }
 }
 
 /**
@@ -190,7 +226,8 @@ ${context}
 ============================
 
 Istruzioni:
-1. Valuta con rigore se ogni estratto risponde DAVVERO alla domanda (stesso argomento, stessa prestazione/agevolazione). Un estratto che condivide solo qualche parola NON è pertinente: ignoralo.
+0. La domanda può contenere errori di battitura: interpretala nel senso più sensato per un operatore CAF (es. "isse" = ISEE) e rispondi a quello.
+1. Valuta se ogni estratto riguarda l'argomento della domanda (stessa prestazione/agevolazione). Un estratto che condivide solo qualche parola NON è pertinente: ignoralo. Se gli estratti pertinenti rispondono anche solo in parte, NON rifiutare: ragiona combinando TUTTI gli estratti pertinenti e dai la risposta più completa possibile (requisiti, condizioni, casi, scadenze, documenti), indicando chiaramente cosa l'archivio non specifica.
 2. Se almeno un estratto è pertinente, apri la risposta con una riga: "Fonte: <titolo del documento>, pagina <n>." (se è una circolare scrivi "Fonte: circolare interna — <titolo>, pagina <n>.") e basa la risposta su quegli estratti, priorità alle CIRCOLARI.
 3. Se NESSUN estratto è pertinente, scrivi solo: "Nell'archivio (FAQ, circolari e documenti caricati) non ho trovato una risposta sicura a questa domanda. Carica il documento pertinente nell'Archivio AI." e NON rispondere con altre informazioni.
 4. Usa ESCLUSIVAMENTE il contenuto degli estratti: vietato usare conoscenze esterne, generali o di internet, vietato dedurre importi, date o requisiti non scritti. Ragiona passo per passo solo sul testo.
