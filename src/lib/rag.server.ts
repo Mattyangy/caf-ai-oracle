@@ -124,16 +124,15 @@ export async function searchCircolari(question: string, limit = 8): Promise<Sear
   return search(adminClient(), question, limit, "circolari");
 }
 
+/** Used when the archive has nothing relevant: never answer from outside knowledge. */
+const NOT_FOUND_PROMPT = `Sei CAF AI. Nell'archivio interno (FAQ, circolari, guide, documenti caricati) non è stato trovato nessun documento pertinente alla domanda.
+Rispondi SOLO con: "Nell'archivio (FAQ, circolari e documenti caricati) non ho trovato una risposta sicura a questa domanda. Carica il documento pertinente nell'Archivio AI oppure riformula la domanda."
+Non aggiungere nessun'altra informazione e non usare conoscenze esterne.`;
+
 /** Prompt for the dedicated circular-search answer (short, always cited). */
 export function buildCircolariPrompt(hits: SearchHit[]): string {
   if (hits.length === 0) {
-    return `Sei CAF AI. L'operatore ha cercato nell'archivio delle CIRCOLARI ma nessuna circolare pertinente è stata trovata.
-
-Istruzioni obbligatorie:
-1. Apri la risposta con una riga del tipo: "Fonte: ChatGPT (conoscenza generale) — nessuna circolare interna trovata."
-2. Rispondi comunque alla domanda usando le tue conoscenze generali in materia fiscale, previdenziale e assistenziale, in italiano, in modo sintetico e operativo.
-3. Chiudi invitando l'operatore a verificare la risposta presso le fonti ufficiali (Agenzia delle Entrate, INPS, normativa vigente) e suggerisci di caricare la circolare pertinente nell'Archivio AI.
-4. Non inventare riferimenti a circolari interne: non ne è stata trovata nessuna.`;
+    return NOT_FOUND_PROMPT;
   }
 
   const context = hits
@@ -158,7 +157,8 @@ ${context}
 Istruzioni:
 1. Rispondi in italiano, in modo sintetico e operativo (massimo 10 righe).
 2. Cita sempre la circolare, la pagina e le righe da cui proviene ogni informazione (es. "Circolare X, pagina 3, righe 12-18").
-3. Se le circolari non rispondono alla domanda, dillo chiaramente invece di inventare.
+3. Se le circolari non rispondono alla domanda, scrivi solo: "Nell'archivio non ho trovato documenti che rispondono a questa domanda." Non usare MAI conoscenze esterne.
+5. Chiudi con una riga "VERIFICA:" che riporta tra virgolette la frase esatta del documento che conferma la risposta, con documento e pagina.
 4. Numera ogni informazione con il numero dell'estratto tra parentesi quadre, es. [1], [2], seguito da circolare, pagina e righe. Se ci sono più risposte, elencale numerate. Cita SOLO gli estratti che rispondono davvero alla domanda: non citare estratti non pertinenti.`;
 }
 
@@ -170,13 +170,7 @@ Istruzioni:
 export function buildSystemPrompt(hits: SearchHit[]): string {
   const now = new Date().toLocaleDateString("it-IT");
   if (hits.length === 0) {
-    return `Sei CAF AI, un assistente operativo per operatori di CAF e Patronato in Italia. Data odierna: ${now}.
-
-Nessun documento pertinente è stato trovato nell'archivio interno per questa domanda.
-
-Rispondi comunque usando le tue conoscenze generali in materia fiscale, previdenziale e assistenziale, indicando CHIARAMENTE nella risposta che la risposta NON è supportata da alcuna circolare o documento interno e invitando l'operatore a verificarla presso le fonti ufficiali (Agenzia delle Entrate, INPS, normativa vigente).
-
-Rispondi in italiano, in modo chiaro, completo e professionale. Struttura la risposta con paragrafi ben leggibili e, dove utile, elenchi puntati.`;
+    return `${NOT_FOUND_PROMPT}\nUltima riga: "FONTI USATE: nessuna".`;
   }
 
   const context = hits
@@ -198,8 +192,9 @@ ${context}
 Istruzioni:
 1. Valuta con rigore se ogni estratto risponde DAVVERO alla domanda (stesso argomento, stessa prestazione/agevolazione). Un estratto che condivide solo qualche parola NON è pertinente: ignoralo.
 2. Se almeno un estratto è pertinente, apri la risposta con una riga: "Fonte: <titolo del documento>, pagina <n>." (se è una circolare scrivi "Fonte: circolare interna — <titolo>, pagina <n>.") e basa la risposta su quegli estratti, priorità alle CIRCOLARI.
-3. Se NESSUN estratto è pertinente, apri la risposta con: "Fonte: ChatGPT (conoscenza generale) — nessun documento interno pertinente." e rispondi con le tue conoscenze generali, invitando a verificare presso le fonti ufficiali.
-4. Se integri le fonti con conoscenze generali, segnala cosa proviene dall'archivio e cosa è integrazione.
+3. Se NESSUN estratto è pertinente, scrivi solo: "Nell'archivio (FAQ, circolari e documenti caricati) non ho trovato una risposta sicura a questa domanda. Carica il documento pertinente nell'Archivio AI." e NON rispondere con altre informazioni.
+4. Usa ESCLUSIVAMENTE il contenuto degli estratti: vietato usare conoscenze esterne, generali o di internet, vietato dedurre importi, date o requisiti non scritti. Ragiona passo per passo solo sul testo.
+4b. Prima del riepilogo aggiungi una riga "VERIFICA:" che riporta tra virgolette la frase esatta del documento che conferma la risposta, con documento e pagina.
 5. Non citare i numeri [Fonte N] nel corpo della risposta.
 6. Rispondi in italiano, in modo chiaro e professionale, con paragrafi e — dove utile — elenchi puntati.
 7. Aggiungi una riga con "RIEPILOGO:" e una sintesi in 1-2 frasi.

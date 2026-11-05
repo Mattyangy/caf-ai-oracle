@@ -9,7 +9,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { streamText } from "ai";
 import { requireApprovedUser } from "@/lib/api-auth.server";
-import { buildCircolariPrompt, searchCircolari } from "@/lib/rag.server";
+import { buildCircolariPrompt, searchArchive } from "@/lib/rag.server";
 import { getAiProvider } from "@/lib/ai/index.server";
 
 export const Route = createFileRoute("/api/circolari-search")({
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/api/circolari-search")({
         const question = (body.question ?? "").trim();
         if (!question) return new Response("Bad Request", { status: 400 });
 
-        const hits = await searchCircolari(question, 8);
+        const hits = await searchArchive(question, 8);
 
         const allHits = hits.map((h, i) => ({
           n: i + 1,
