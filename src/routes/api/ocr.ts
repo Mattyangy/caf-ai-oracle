@@ -17,7 +17,7 @@ export const Route = createFileRoute("/api/ocr")({
         if (!images?.length || images.length > 20) {
           return new Response("Bad Request", { status: 400 });
         }
-        const model = createGeminiProvider().chatModel("google/gemini-3.8-flash");
+        const model = createGeminiProvider().chatModel("google/gemini-3.1-flash-lite");
         const pages = await Promise.all(
           images.map(async (img) => {
             try {

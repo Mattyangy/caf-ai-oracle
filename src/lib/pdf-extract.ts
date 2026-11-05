@@ -154,13 +154,13 @@ export async function pdfToImages(file: File): Promise<string[]> {
   const out: string[] = [];
   for (let n = 1; n <= Math.min(pdf.numPages, 20); n++) {
     const page = await pdf.getPage(n);
-    const viewport = page.getViewport({ scale: 1.6 });
+    const viewport = page.getViewport({ scale: 1.2 });
     const canvas = document.createElement("canvas");
     canvas.width = viewport.width;
     canvas.height = viewport.height;
     await page.render({ canvas, canvasContext: canvas.getContext("2d")!, viewport } as never)
       .promise;
-    out.push(canvas.toDataURL("image/jpeg", 0.8));
+    out.push(canvas.toDataURL("image/jpeg", 0.7));
   }
   return out;
 }
@@ -168,7 +168,7 @@ export async function pdfToImages(file: File): Promise<string[]> {
 /** Read an image file as a (downscaled) JPEG data URL. */
 export async function imageToDataUrl(file: File): Promise<string> {
   const bmp = await createImageBitmap(file);
-  const scale = Math.min(1, 2000 / Math.max(bmp.width, bmp.height));
+  const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(bmp.width * scale);
   canvas.height = Math.round(bmp.height * scale);
