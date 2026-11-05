@@ -6,3 +6,5 @@
 - [x] Analizza documento: possibilità di caricare più documenti insieme
 - [x] Mostrare solo i PDF realmente usati nella risposta (con pagina)
 - [x] Risposte solo dall'archivio (FAQ, circolari…), niente conoscenza esterna, sempre con documento di verifica
+- [ ] Collegare www.cafai.it con connessione sicura (in attesa dei record DNS dell'utente)
+- [x] Icona del sito nella barra dell'indirizzo con il logo CAF AI
