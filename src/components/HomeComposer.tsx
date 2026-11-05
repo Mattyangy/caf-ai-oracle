@@ -7,7 +7,14 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Paperclip, Send, Loader2, FileText, X } from "lucide-react";
 import { toast } from "sonner";
-import { extractFile, pagesToTranscript } from "@/lib/pdf-extract";
+import {
+  extractFile,
+  pagesToTranscript,
+  pdfToImages,
+  imageToDataUrl,
+  ocrToPages,
+} from "@/lib/pdf-extract";
+import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_ENGINE, isAiEngineId, type AiEngineId } from "@/lib/ai/models";
 
 export type AttachedDoc = { name: string; transcript: string; pageCount: number | null };
@@ -87,16 +94,40 @@ export function HomeComposer({
     const added: AttachedDoc[] = [];
     try {
       for (const file of Array.from(files)) {
-        if (!/\.(pdf|md|txt|docx)$/i.test(file.name)) {
-          toast.error(`${file.name}: formati supportati PDF, Word (.docx), TXT, MD`);
+        const isImage = /\.(jpe?g|png|webp)$/i.test(file.name);
+        if (!isImage && !/\.(pdf|md|txt|docx)$/i.test(file.name)) {
+          toast.error(`${file.name}: formati supportati PDF, Word, foto (JPG/PNG), TXT`);
           continue;
         }
         setProgress(`Lettura di ${file.name}…`);
-        const res = await extractFile(file, (p, total) =>
-          setProgress(`${file.name}: pagina ${p} di ${total}…`),
-        );
+        const res = isImage
+          ? { chunks: [], pages: [], pageCount: 1 }
+          : await extractFile(file, (p, total) =>
+              setProgress(`${file.name}: pagina ${p} di ${total}…`),
+            );
         if (res.chunks.length === 0) {
-          toast.error(`${file.name}: nessun testo estratto (PDF scansionato?)`);
+          // Scanned PDF or photo: read it with AI (OCR), nothing is saved.
+          setProgress(`${file.name}: lettura scansione con AI…`);
+          const images = isImage ? [await imageToDataUrl(file)] : await pdfToImages(file);
+          const { data } = await supabase.auth.getSession();
+          const r = await fetch("/api/ocr", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+            },
+            body: JSON.stringify({ images }),
+          });
+          const pages = r.ok ? ocrToPages(((await r.json()) as { pages: string[] }).pages) : [];
+          if (!pages.some((p) => p.lines.length)) {
+            toast.error(`${file.name}: non riesco a leggere il testo del documento`);
+            continue;
+          }
+          added.push({
+            name: file.name,
+            transcript: pagesToTranscript(pages),
+            pageCount: pages.length,
+          });
           continue;
         }
         added.push({
@@ -189,7 +220,7 @@ export function HomeComposer({
               type="file"
               multiple
               hidden
-              accept=".pdf,.md,.txt,.docx,application/pdf,text/markdown,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              accept=".pdf,.md,.txt,.docx,.jpg,.jpeg,.png,.webp,image/*,application/pdf,text/markdown,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               onChange={(e) => {
                 handleFiles(e.target.files);
                 e.target.value = "";
