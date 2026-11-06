@@ -122,7 +122,42 @@ export async function searchArchive(question: string, limit = 10): Promise<Searc
   // Circolari first, then the rest of the archive.
   for (const q of queries) add(await search(supabase, q, limit, "circolari", corrected));
   for (const q of queries) add(await search(supabase, q, limit, undefined, corrected));
-  return out.slice(0, limit);
+  return rerank(corrected, out.slice(0, 15), limit);
+}
+
+/**
+ * Keep only the extracts that really answer the question. Full-text search
+ * matches common words (e.g. the huge "visto di conformità" guide matches
+ * almost anything), so a fast AI judge reads each extract and discards the
+ * off-topic ones before the answer is generated.
+ */
+async function rerank(question: string, hits: SearchHit[], limit: number): Promise<SearchHit[]> {
+  if (hits.length === 0) return hits;
+  try {
+    const { generateText } = await import("ai");
+    const { createGeminiProvider } = await import("./ai/lovable.server");
+    const list = hits
+      .map((h, i) => `[${i + 1}] ${h.document_title} p.${h.page_number ?? "-"}\n${h.content.slice(0, 700)}`)
+      .join("\n\n");
+    const { text } = await generateText({
+      model: createGeminiProvider().chatModel("google/gemini-3.1-flash-lite"),
+      system:
+        "Sei un valutatore rigoroso per operatori CAF. Ti do una domanda ed estratti numerati. " +
+        "Indica SOLO gli estratti che contengono informazioni che rispondono direttamente alla domanda " +
+        "(stesso argomento, stessa prestazione/agevolazione). Estratti che condividono solo parole generiche NON valgono. " +
+        "Rispondi solo con i numeri in ordine di pertinenza, separati da virgola, oppure NESSUNO.",
+      prompt: `DOMANDA: ${question}\n\nESTRATTI:\n${list}`,
+    });
+    if (/nessuno/i.test(text)) return [];
+    const nums = [...new Set([...text.matchAll(/\d+/g)].map((m) => Number(m[0])))].filter(
+      (n) => n >= 1 && n <= hits.length,
+    );
+    if (nums.length === 0) return [];
+    return nums.slice(0, Math.min(limit, 6)).map((n) => hits[n - 1]);
+  } catch (err) {
+    console.error("rerank failed", err);
+    return hits.slice(0, limit);
+  }
 }
 
 /**
@@ -233,8 +268,8 @@ Istruzioni:
 4. Usa ESCLUSIVAMENTE il contenuto degli estratti: vietato usare conoscenze esterne, generali o di internet, vietato dedurre importi, date o requisiti non scritti. Ragiona passo per passo solo sul testo.
 4b. Prima del riepilogo aggiungi una riga "VERIFICA:" che riporta tra virgolette la frase esatta del documento che conferma la risposta, con documento e pagina.
 5. Non citare i numeri [Fonte N] nel corpo della risposta.
-6. Rispondi in italiano, in modo chiaro e professionale, con paragrafi e — dove utile — elenchi puntati.
-7. Aggiungi una riga con "RIEPILOGO:" e una sintesi in 1-2 frasi.
+6. Rispondi in italiano in modo SINTETICO e ragionato: prima la risposta diretta in 1-2 frasi, poi al massimo 5 punti elenco con il ragionamento (requisiti, condizioni, eccezioni). Niente ripetizioni né introduzioni inutili.
+7. Aggiungi una riga con "RIEPILOGO:" e una sintesi in 1 frase.
 8. ULTIMA riga obbligatoria, da sola: "FONTI USATE: " seguito dai numeri delle fonti effettivamente usate (es. "FONTI USATE: 1, 3"), oppure "FONTI USATE: nessuna".`;
 }
 
